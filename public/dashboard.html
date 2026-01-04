@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Kaizaro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="dashboard.js" defer></script>
+
+    <style>
+        /* --- DESIGN SYSTEM --- */
+        :root {
+            --bg-body: #050505; --bg-card: #0f0f0f; --bg-hover: #1a1a1a;
+            --primary: #2563eb; --primary-hover: #1d4ed8;
+            --text-main: #ffffff; --text-muted: #a1a1aa;
+            --border: #27272a; --radius: 12px;
+            --success-bg: rgba(16, 185, 129, 0.15); --success-text: #34d399;
+            --danger-bg: rgba(239, 68, 68, 0.15); --danger-text: #f87171;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-body); color: var(--text-main);
+            height: 100vh; display: grid; grid-template-columns: 260px 1fr;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            background: #0a0a0a; border-right: 1px solid var(--border);
+            padding: 24px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .brand { 
+            font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 40px; 
+            display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            color: var(--text-muted); border-radius: 8px; cursor: pointer;
+            transition: 0.2s; font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;
+        }
+        .nav-item:hover { background: var(--bg-hover); color: white; }
+        .nav-item.active { background: #1e1e20; color: white; border-right: 3px solid var(--primary); }
+
+        .user-profile {
+            padding-top: 20px; border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px;
+        }
+        .avatar {
+            width: 40px; height: 40px; background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 1rem; color: white;
+        }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+            opacity: 0; animation: fadeIn 0.5s forwards; /* Smooth Load */
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -1px; }
+        .header p { color: var(--text-muted); margin-top: 6px; }
+
+        /* COMPONENTS */
+        .btn-primary {
+            background: var(--primary); color: white; border: none; padding: 12px 24px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;
+            transition: 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+        /* GRID SYSTEM */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
+        
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; position: relative;
+            transition: 0.2s;
+        }
+        .card:hover { border-color: #3f3f46; }
+        
+        .stat-val { font-size: 2.2rem; font-weight: 700; margin-top: 12px; letter-spacing: -1px; }
+        .stat-lbl { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        .icon-box { 
+            position: absolute; top: 24px; right: 24px; 
+            color: var(--text-muted); opacity: 0.5; 
+        }
+
+        /* TABLES */
+        .table-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--text-muted); padding: 16px 24px; border-bottom: 1px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 20px 24px; border-bottom: 1px solid var(--bg-hover); font-size: 0.95rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-hover); }
+
+        /* STATUS BADGES */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge.success { background: var(--success-bg); color: var(--success-text); }
+        .badge.danger { background: var(--danger-bg); color: var(--danger-text); }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: none; place-items: center; z-index: 100; opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.open { display: grid; opacity: 1; }
+        
+        .modal-box {
+            background: #121212; border: 1px solid var(--border); padding: 32px;
+            border-radius: 20px; width: 100%; max-width: 480px; transform: scale(0.95); transition: 0.3s;
+        }
+        .modal-overlay.open .modal-box { transform: scale(1); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; }
+        .form-input {
+            width: 100%; padding: 14px; background: #080808; border: 1px solid var(--border);
+            border-radius: 8px; color: white; outline: none; font-size: 1rem;
+        }
+        .form-input:focus { border-color: var(--primary); }
+
+        .btn-close { position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-muted); cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <aside>
+        <div>
+            <div class="brand"><i data-lucide="layers"></i> KAIZARO</div>
+            <div id="navContainer">
+                </div>
+        </div>
+
+        <div class="user-profile">
+            <div class="avatar" id="userInitial">U</div>
+            <div style="flex:1">
+                <div id="userName" style="font-weight:600; font-size:0.95rem;">User</div>
+                <div id="userRole" style="font-size:0.8rem; color:var(--text-muted); text-transform:capitalize;">Role</div>
+            </div>
+            <button onclick="App.logout()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:5px;">
+                <i data-lucide="log-out" size="18"></i>
+            </button>
+        </div>
+    </aside>
+
+    <main id="mainContainer">
+        </main>
+
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-box" style="position:relative;">
+            <button class="btn-close" onclick="UI.closeModal()"><i data-lucide="x"></i></button>
+            <h2 id="modalTitle" style="margin-bottom:24px; font-size:1.5rem;">Add New</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+</body>
+</html>

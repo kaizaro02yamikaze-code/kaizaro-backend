@@ -1,0 +1,199 @@
+/**
+ * KAIZARO EXAM ENGINE
+ * Handles test delivery, timing, and result generation.
+ */
+
+'use strict';
+
+const ExamEngine = {
+    // State
+    currentQIndex: 0,
+    answers: {}, // Stores user answers { qIndex: optionIndex }
+    reviewList: new Set(),
+    questions: [],
+    timer: null,
+    timeLeft: 1800, // Default 30 mins (in seconds)
+
+    init() {
+        lucide.createIcons();
+        this.loadExamData();
+        this.renderPalette();
+        this.loadQuestion(0);
+        this.startTimer();
+        
+        // Anti-Cheat (Simple Version)
+        // document.addEventListener("visibilitychange", () => {
+        //     if (document.hidden) alert("⚠️ Warning: Tab switching is monitored!");
+        // });
+    },
+
+    loadExamData() {
+        // 1. Try to get ID from Student Dashboard link
+        const examId = localStorage.getItem('kaizaro_current_exam_id');
+        
+        // 2. Try to find actual test data published by Teacher
+        const allTests = JSON.parse(localStorage.getItem('kaizaro_active_tests') || "[]");
+        const realTest = allTests.find(t => t.id === examId);
+
+        if (realTest) {
+            this.questions = realTest.questions;
+            this.timeLeft = parseInt(realTest.duration) * 60;
+            document.getElementById('exam-subject').innerText = realTest.topic;
+        } else {
+            // 3. Fallback: Generate Fake Data if no real test found (Demo Mode)
+            this.generateFakeQuestions(30); // Default 30 questions
+            document.getElementById('exam-subject').innerText = "Physics: Mixed Drill (Demo)";
+        }
+    },
+
+    generateFakeQuestions(count) {
+        const topics = ["Thermodynamics", "Kinematics", "Optics", "Electromagnetism"];
+        for(let i=0; i<count; i++) {
+            const topic = topics[i % topics.length];
+            this.questions.push({
+                id: i+1,
+                text: `Question ${i+1}: Identify the correct principle related to <strong>${topic}</strong> in this scenario...`,
+                options: [
+                    `Option A: Concept of ${topic}`,
+                    `Option B: Incorrect statement`,
+                    `Option C: Unrelated formula`,
+                    `Option D: None of the above`
+                ],
+                correct: 0,
+                topic: topic // Used for AI analysis
+            });
+        }
+    },
+
+    startTimer() {
+        const display = document.getElementById('timer-display');
+        this.timer = setInterval(() => {
+            this.timeLeft--;
+            
+            const m = Math.floor(this.timeLeft / 60);
+            const s = this.timeLeft % 60;
+            display.innerHTML = `<i data-lucide="clock" size="18"></i> ${m}:${s < 10 ? '0'+s : s}`;
+
+            if (this.timeLeft <= 300) display.classList.add('timer-warning'); // Red if < 5 mins
+
+            if (this.timeLeft <= 0) {
+                clearInterval(this.timer);
+                alert("Time's Up! Submitting automatically.");
+                this.submitExam();
+            }
+        }, 1000);
+    },
+
+    // --- RENDERING ---
+    loadQuestion(index) {
+        this.currentQIndex = index;
+        const q = this.questions[index];
+
+        // Update UI
+        document.getElementById('q-num').innerText = index + 1;
+        document.getElementById('q-content').innerHTML = q.text;
+        
+        // Options
+        const container = document.getElementById('options-container');
+        container.innerHTML = q.options.map((opt, i) => `
+            <div class="option-card ${this.answers[index] === i ? 'selected' : ''}" onclick="ExamEngine.selectOption(${i})">
+                <div class="option-circle"></div>
+                <span>${opt}</span>
+            </div>
+        `).join('');
+
+        // Buttons state
+        document.getElementById('btn-next').style.display = index === this.questions.length - 1 ? 'none' : 'block';
+        document.getElementById('btn-submit').style.display = index === this.questions.length - 1 ? 'block' : 'none';
+        
+        this.updatePalette();
+    },
+
+    renderPalette() {
+        const container = document.getElementById('palette-container');
+        container.innerHTML = this.questions.map((_, i) => `
+            <div class="q-btn" id="pal-${i}" onclick="ExamEngine.loadQuestion(${i})">${i+1}</div>
+        `).join('');
+    },
+
+    updatePalette() {
+        // Reset all classes
+        document.querySelectorAll('.q-btn').forEach((btn, i) => {
+            btn.className = 'q-btn'; // Base class
+            if (i === this.currentQIndex) btn.classList.add('current');
+            if (this.answers[i] !== undefined) btn.classList.add('answered');
+            if (this.reviewList.has(i)) btn.classList.add('review');
+        });
+    },
+
+    // --- INTERACTIONS ---
+    selectOption(optIndex) {
+        this.answers[this.currentQIndex] = optIndex;
+        this.loadQuestion(this.currentQIndex); // Re-render to show selection
+    },
+
+    nextQuestion() {
+        if (this.currentQIndex < this.questions.length - 1) {
+            this.loadQuestion(this.currentQIndex + 1);
+        }
+    },
+
+    prevQuestion() {
+        if (this.currentQIndex > 0) {
+            this.loadQuestion(this.currentQIndex - 1);
+        }
+    },
+
+    markForReview() {
+        if (this.reviewList.has(this.currentQIndex)) {
+            this.reviewList.delete(this.currentQIndex);
+        } else {
+            this.reviewList.add(this.currentQIndex);
+        }
+        this.updatePalette();
+    },
+
+    // --- SUBMISSION & AI ANALYSIS ---
+    submitExam() {
+        if(!confirm("Are you sure you want to submit?")) return;
+
+        clearInterval(this.timer);
+
+        // 1. Calculate Score
+        let correctCount = 0;
+        let weakTopicsMap = {}; // { "Thermodynamics": 2 errors, ... }
+
+        this.questions.forEach((q, index) => {
+            const userAns = this.answers[index];
+            if (userAns === q.correct) {
+                correctCount++;
+            } else if (userAns !== undefined) {
+                // Wrong Answer -> Track Weak Topic
+                const topic = q.topic || "General";
+                weakTopicsMap[topic] = (weakTopicsMap[topic] || 0) + 1;
+            }
+        });
+
+        const scorePercentage = Math.round((correctCount / this.questions.length) * 100);
+
+        // 2. Prepare Result Data
+        const resultData = {
+            score: scorePercentage,
+            correct: correctCount,
+            total: this.questions.length,
+            weakTopics: weakTopicsMap, // AI will use this on dashboard
+            date: new Date().toLocaleDateString()
+        };
+
+        // 3. Save to LocalStorage for Dashboard to read
+        localStorage.setItem('kaizaro_last_result', JSON.stringify(resultData));
+
+        // 4. Redirect
+        window.location.href = 'dashboard-student.html';
+    }
+};
+
+// Start Engine
+document.addEventListener('DOMContentLoaded', () => {
+    ExamEngine.init();
+});

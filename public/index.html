@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaizaro | Operating System for Education</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        :root {
+            --bg-body: #050505; 
+            --bg-card: #111111;
+            --text-main: #ffffff; 
+            --text-muted: #a1a1aa;
+            --primary: #2563EB; 
+            --primary-hover: #1d4ed8;
+            --border: #27272a; 
+            --input-bg: #1a1a1a;
+            --gradient-hero: linear-gradient(180deg, rgba(37,99,235,0.15) 0%, rgba(5,5,5,0) 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- NAVBAR --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px;
+            position: fixed; top: 0; width: 100%;
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.2rem; }
+        .nav-links { display: flex; gap: 24px; font-size: 0.9rem; color: var(--text-muted); }
+        .nav-links a { color: var(--text-muted); text-decoration: none; transition: 0.2s; }
+        .nav-links a:hover { color: var(--text-main); }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;
+            border: none; transition: 0.2s; font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
+        .btn-outline:hover { border-color: var(--text-main); }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            padding: 160px 20px 80px;
+            text-align: center;
+            background: var(--gradient-hero);
+            min-height: 80vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        h1 {
+            font-size: 3.5rem; line-height: 1.1; font-weight: 800;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            max-width: 800px; margin-bottom: 20px;
+        }
+        .hero p { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin-bottom: 32px; line-height: 1.6; }
+        .cta-group { display: flex; gap: 16px; justify-content: center; }
+
+        /* --- DASHBOARD PREVIEW --- */
+        .dashboard-preview {
+            margin-top: 60px;
+            width: 90%; max-width: 1000px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(37,99,235,0.1);
+            background: var(--bg-card);
+        }
+        
+        /* --- FEATURES --- */
+        .features { padding: 80px 40px; background: #080808; border-top: 1px solid var(--border); }
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-header h2 { font-size: 2rem; margin-bottom: 10px; }
+        .feature-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px; max-width: 1200px; margin: 0 auto;
+        }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 32px; border-radius: 8px; transition: 0.3s;
+        }
+        .feature-card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        .feature-icon { color: var(--primary); margin-bottom: 16px; }
+        .feature-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .feature-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
+        /* --- FOOTER --- */
+        footer { padding: 40px; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+
+        /* --- LOGIN MODAL --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+
+        .login-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            width: 100%; max-width: 400px;
+            padding: 40px; border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        .close-btn {
+            position: absolute; top: 16px; right: 16px;
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer;
+        }
+        .close-btn:hover { color: white; }
+
+        .input-group { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 6px; font-weight: 500; }
+        input {
+            width: 100%; padding: 10px 12px; border-radius: 6px;
+            background: var(--input-bg); border: 1px solid var(--border);
+            color: white; font-size: 0.95rem; outline: none;
+        }
+        input:focus { border-color: var(--primary); }
+        .divider { display: flex; align-items: center; color: var(--text-muted); font-size: 0.8rem; margin: 24px 0; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+        .divider span { padding: 0 12px; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="brand">
+            <i data-lucide="layout-grid" style="color:var(--primary)"></i> KAIZARO
+        </div>
+        <div class="nav-links">
+            <a href="#">Solutions</a>
+            <a href="#">Pricing</a>
+            <a href="#">Enterprise</a>
+            <a href="#">Resources</a>
+        </div>
+        <div>
+            <button class="btn btn-outline" onclick="toggleLogin()">Sign In</button>
+            <button class="btn btn-primary" style="margin-left: 10px;" onclick="toggleLogin()">Start Free Trial</button>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>The Operating System for<br>Modern Institutes</h1>
+        <p>Streamline management, automate finances, and empower teachers with AI-driven insights. Designed for high-performance educational organizations.</p>
+        
+        <div class="cta-group">
+            <button class="btn btn-primary" onclick="toggleLogin()" style="padding: 12px 24px; font-size: 1rem;">Get Started Free</button>
+            <button class="btn btn-outline" style="padding: 12px 24px; font-size: 1rem;">View Live Demo</button>
+        </div>
+
+        <div class="dashboard-preview">
+            <div style="padding: 20px; border-bottom: 1px solid var(--border); background: #0f0f0f; display: flex; align-items: center; gap: 8px;">
+                <div style="width:12px; height:12px; border-radius:50%; background:#ef4444;"></div>
+                <div style="width:12px; height:12px; border-radius:50%; background:#f59e0b;"></div>
+                <div style="width:12px; height:12px; border-radius:50%; background:#10b981;"></div>
+            </div>
+            <div style="padding: 40px; text-align: center; height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                <div style="opacity: 0.5;">
+                    <i data-lucide="layout-dashboard" size="48"></i>
+                    <p style="margin-top: 10px;">Interactive Dashboard Preview</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="section-header">
+            <h2>Everything you need to scale</h2>
+            <p style="color: var(--text-muted);">Built for owners who demand control and clarity.</p>
+        </div>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <i data-lucide="bar-chart-3" class="feature-icon"></i>
+                <h3>Financial Command</h3>
+                <p>Track revenue, pending fees, and teacher salaries in real-time. Never lose track of a single dollar.</p>
+            </div>
+            <div class="feature-card">
+                <i data-lucide="brain-circuit" class="feature-icon"></i>
+                <h3>Kaizaro AI</h3>
+                <p>Predict student dropouts and identify high-performing batches before the term ends.</p>
+            </div>
+            <div class="feature-card">
+                <i data-lucide="shield-check" class="feature-icon"></i>
+                <h3>Role-Based Access</h3>
+                <p>Granular control over what your staff sees. Secure your data with enterprise-grade permissions.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div style="margin-bottom: 20px;">
+            <i data-lucide="layout-grid" style="color:var(--primary)"></i> <strong>KAIZARO</strong>
+        </div>
+        <p>&copy; 2024 Kaizaro Education Systems. All rights reserved.</p>
+    </footer>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="login-card">
+            <button class="close-btn" onclick="toggleLogin()"><i data-lucide="x"></i></button>
+            
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="font-size: 1.5rem;">Welcome Back</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Sign in to continue to setup</p>
+            </div>
+
+            <div id="authContent" class="auth-container">
+            <div id="googleSection">
+                <div class="google-wrapper">
+                    <div id="g_id_onload"
+                         data-client_id="651052991638-gf3d38nf8oovrglafrqn63su7n4ckvkl.apps.googleusercontent.com"
+                         data-callback="handleGoogleCallback"
+                         data-auto_prompt="false">
+                    </div>
+                <div class="g_id_signin" data-type="standard" data-theme="filled_black" data-size="large" data-width="320"></div>
+            </div>
+
+            <div class="divider"><span>OR CONTINUE WITH</span></div>
+
+            <form id="emailForm" onsubmit="event.preventDefault(); window.location.href='setup.html'">
+                <div class="input-group">
+                    <label>Email address</label>
+                    <input type="email" id="email" placeholder="owner@institute.com" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; gap:8px;">
+                    Sign In <i data-lucide="arrow-right" size="16"></i>
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                Forgot password? <a href="#" style="color: var(--primary); text-decoration: none;">Reset here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Toggle Login Modal
+        function toggleLogin() {
+            const modal = document.getElementById('loginModal');
+            if (modal.style.display === 'flex') {
+                modal.style.opacity = '0';
+                setTimeout(() => modal.style.display = 'none', 300);
+            } else {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.style.opacity = '1', 10);
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) toggleLogin();
+        });
+
+        // CHANGED: Google Callback redirects to setup.html
+        function handleGoogleCallback(response) {
+            console.log("Google Token:", response.credential);
+            window.location.href = 'setup.html';
+        }
+    </script>
+    <script src="index.js"></script>
+</body>
+</html>

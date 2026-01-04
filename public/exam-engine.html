@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Engine | Kaizaro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="exam-engine.js" defer></script>
+
+    <style>
+        /* CORE STYLES */
+        :root { --bg-body: #050505; --bg-card: #121212; --border: #262626; --text-main: #e5e5e5; --primary: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; user-select: none; }
+        body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; display: grid; grid-template-rows: 60px 1fr; overflow: hidden; }
+
+        /* HEADER */
+        header { border-bottom: 1px solid var(--border); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; z-index: 10; }
+        .timer-box { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--text-main); background: #222; padding: 8px 16px; border-radius: 6px; border: 1px solid #333; }
+
+        /* LAYOUT */
+        .exam-layout { display: grid; grid-template-columns: 280px 1fr; height: 100%; overflow: hidden; }
+        aside { border-right: 1px solid var(--border); background: #080808; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; padding-bottom: 100px; }
+        
+        .question-area { padding: 0; overflow-y: auto; height: 100%; width: 100%; padding-bottom: 120px; }
+        #exam-view { padding: 40px; display: block; max-width: 1000px; margin: 0 auto; }
+        #learning-view { display: none; flex-direction: column; gap: 20px; padding: 30px; align-items: center; width: 100%; }
+
+        /* --- ADVANCED SIMULATION CSS --- */
+        .simulation-wrapper { width: 100%; max-width: 800px; position: relative; perspective: 1000px; }
+        
+        .simulation-box {
+            width: 100%; height: 450px; background: #1a1a1a; 
+            border-radius: 16px; border: 1px solid #333; position: relative; 
+            display: flex; justify-content: center; align-items: flex-end; padding-bottom: 40px;
+            overflow: hidden; box-shadow: inset 0 0 80px rgba(0,0,0,0.8);
+        }
+
+        /* METALLIC CYLINDER */
+        .cylinder {
+            width: 220px; height: 300px; 
+            border: 10px solid #444; border-top: none; border-radius: 0 0 20px 20px;
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 100%);
+            overflow: hidden; z-index: 2; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* PISTON HEAD */
+        .piston {
+            width: 100%; height: 50px; 
+            background: linear-gradient(180deg, #777, #444);
+            border-bottom: 4px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: absolute; top: 20px; left: 0;
+            transition: top 1s cubic-bezier(0.45, 0.05, 0.55, 0.95); z-index: 5;
+        }
+        .piston::after { content: ''; width: 100%; height: 4px; background: #999; position: absolute; top: 2px; }
+
+        /* CONNECTING ROD */
+        .connecting-rod {
+            width: 20px; height: 200px; background: linear-gradient(90deg, #333, #555, #333); 
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 4; transform-origin: top center;
+        }
+
+        /* CRANKSHAFT */
+        .crank-wheel {
+            width: 120px; height: 120px; border-radius: 50%; 
+            border: 10px solid #333; background: radial-gradient(circle, #222, #000);
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .crank-pin { width: 24px; height: 24px; background: #888; border-radius: 50%; position: absolute; top: 10px; box-shadow: 0 2px 5px black; }
+
+        /* PRESSURE GAUGE */
+        .gauge-container {
+            position: absolute; top: 40px; left: 40px; width: 100px; height: 100px;
+            background: #222; border-radius: 50%; border: 4px solid #444;
+            display: flex; justify-content: center; align-items: center; z-index: 10;
+        }
+        .gauge-dial { width: 90%; height: 90%; background: radial-gradient(circle, #fff 0%, #ccc 100%); border-radius: 50%; position: relative; }
+        .gauge-needle {
+            width: 40%; height: 2px; background: red; position: absolute;
+            top: 50%; left: 50%; transform-origin: 0% 50%; transform: rotate(-135deg);
+            transition: transform 1s ease-in-out;
+        }
+        .gauge-label { position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); color: #888; font-size: 0.7rem; font-weight: bold; }
+
+        /* PARTICLES & GLOW */
+        .particle-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .particle { width: 8px; height: 8px; background: rgba(255,255,255,0.6); border-radius: 50%; position: absolute; transition: all 0.2s linear; box-shadow: 0 0 5px white; }
+        .heat-glow { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; transition: opacity 1s ease; opacity: 0; z-index: 0; mix-blend-mode: overlay; }
+
+        /* ANIMATION STATES */
+        .state-compression .piston { top: 180px; }
+        .state-compression .heat-glow { background: radial-gradient(circle, #ef4444 0%, transparent 80%); opacity: 1; }
+        .state-compression .crank-wheel { transform: translateX(-50%) rotate(180deg); transition: transform 1s ease; }
+        .state-compression .gauge-needle { transform: rotate(45deg); } /* High Pressure */
+        
+        .state-expansion .piston { top: 30px; }
+        .state-expansion .heat-glow { background: radial-gradient(circle, #3b82f6 0%, transparent 80%); opacity: 0.6; }
+        .state-expansion .crank-wheel { transform: translateX(-50%) rotate(360deg); transition: transform 1s ease; }
+        .state-expansion .gauge-needle { transform: rotate(-135deg); } /* Low Pressure */
+
+        /* NOTES */
+        .smart-note-box {
+            width: 100%; max-width: 800px; background: #1a1a1a; padding: 25px; border-radius: 8px; border-left: 5px solid var(--primary);
+            min-height: 120px; display: flex; flex-direction: column; justify-content: center; margin-top: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* FOOTER */
+        .controls { position: fixed; bottom: 0; right: 0; left: 280px; background: var(--bg-card); border-top: 1px solid var(--border); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; z-index: 100; height: 80px; }
+        .btn { padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 0.9rem; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: #ccc; }
+
+        .palette-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .q-btn { aspect-ratio: 1; border-radius: 6px; border: 1px solid var(--border); background: #1a1a1a; color: #888; display: grid; place-items: center; cursor: pointer; }
+        .q-btn.current { border-color: var(--primary); color: white; background: rgba(59,130,246,0.1); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:10px;">
+            <i data-lucide="layers"></i> KAIZARO ENGINE
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:0.8rem; color:#888;">Session Mode</div>
+            <div id="exam-subject" style="font-weight:600;">Physics Simulation</div>
+        </div>
+        <div class="timer-box" id="timer-display">--:--</div>
+    </header>
+
+    <div class="exam-layout">
+        <aside id="sidebar-panel">
+            <div id="exam-sidebar">
+                <div style="margin-bottom:15px; font-size:0.85rem; color:#888;">Question Palette</div>
+                <div class="palette-grid" id="palette-container"></div>
+            </div>
+
+            <div id="learning-sidebar" style="display:none; flex-direction:column; gap:15px;">
+                <h3 style="color:white; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="cpu"></i> Visual Engine
+                </h3>
+                <p style="color:#aaa; font-size:0.85rem; line-height:1.5;">
+                    Real-time rendering of a Carnot Heat Engine.
+                </p>
+                <div style="padding:15px; background:#222; border-radius:8px; border:1px solid #333;">
+                    <div style="color:white; font-size:0.8rem; font-weight:bold; margin-bottom:5px;">AI Tutor Status</div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div id="voice-indicator" style="width:8px; height:8px; background:#555; border-radius:50%;"></div>
+                        <span id="voice-status" style="color:#666; font-size:0.75rem;">Waiting to start...</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="question-area">
+            <div id="exam-view">
+                <div class="q-header">
+                    <span style="font-size:1.2rem; font-weight:700; color:var(--primary);">Question <span id="q-num">1</span></span>
+                    <span style="font-size:0.9rem; color:#888;">+4 Marks / -1 Negative</span>
+                </div>
+                <div class="q-text" id="q-content">Loading...</div>
+                <div class="options-grid" id="options-container"></div>
+            </div>
+
+            <div id="learning-view">
+                <div class="simulation-wrapper" id="sim-wrapper">
+                    <div class="simulation-box" id="sim-container">
+                        
+                        <div class="gauge-container">
+                            <div class="gauge-dial">
+                                <div class="gauge-needle"></div>
+                            </div>
+                            <span class="gauge-label">PRESSURE</span>
+                        </div>
+
+                        <div class="cylinder">
+                            <div class="heat-glow"></div>
+                            <div class="particle-container" id="particle-box"></div>
+                            <div class="piston">
+                                <div class="connecting-rod"></div>
+                            </div>
+                        </div>
+                        <div class="crank-wheel">
+                            <div class="crank-pin"></div>
+                        </div>
+
+                        <div style="position:absolute; top:20px; right:20px; color:#fff; font-family:monospace; background:rgba(0,0,0,0.6); padding:8px 12px; border-radius:6px; border:1px solid #444;">
+                            TEMP: <span id="temp-val" style="color:var(--success); font-weight:bold;">300K</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="smart-note-box">
+                    <div style="color:var(--primary); font-size:0.8rem; font-weight:bold; letter-spacing:1px; margin-bottom:8px;" id="step-label">READY</div>
+                    <div style="color:white; font-size:1.1rem; line-height:1.6;" id="note-text">
+                        Click 'Start Simulation' to visualize the physics concepts.
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" id="start-sim-btn" onclick="ExamEngine.startSimulationLoop()" style="width: 250px; font-size:1rem; padding:12px;">
+                        <i data-lucide="play"></i> Start Engine Simulation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls" id="footer-controls">
+        <button class="btn btn-danger" onclick="ExamEngine.exitSession()">Exit Session</button>
+        <div id="exam-buttons" style="display:flex; gap:15px;">
+            <button class="btn btn-outline" onclick="ExamEngine.prevQuestion()">Previous</button>
+            <button class="btn btn-primary" onclick="ExamEngine.nextQuestion()" id="btn-next">Save & Next</button>
+            <button class="btn btn-danger" onclick="ExamEngine.submitExam()" id="btn-submit" style="display:none;">Submit Test</button>
+        </div>
+    </div>
+
+</body>
+</html>

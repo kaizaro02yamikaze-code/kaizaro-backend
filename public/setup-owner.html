@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Configuration | System Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* --- EXACT DARK THEME CSS --- */
+        :root {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --input-bg: #020617;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Header */
+        .header {
+            background-color: transparent; /* Removed dark header bg to match card style */
+            padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0;
+        }
+
+        /* Sections */
+        .section {
+            padding: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .section-id {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Form Layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 2px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .readonly-field {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            cursor: not-allowed;
+            color: var(--text-muted) !important;
+        }
+
+        /* Checkbox Groups */
+        .checkbox-group {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 2px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .checkbox-item:last-child { margin-bottom: 0; }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 0.75rem;
+            accent-color: var(--primary);
+            cursor: pointer;
+            transform: none; /* Reset scale from old CSS */
+        }
+
+        .checkbox-item label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: 400;
+            text-transform: none;
+            color: var(--text-main);
+            font-size: 0.875rem;
+            letter-spacing: normal;
+        }
+
+        /* Radio Options (Complex) */
+        .radio-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: flex-start; /* Align top for multi-line text */
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .radio-option:hover {
+            border-color: var(--text-muted);
+        }
+
+        .radio-option input {
+            margin-right: 1rem;
+            margin-top: 0.25rem; /* Align with title */
+            accent-color: var(--primary);
+        }
+
+        .radio-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .radio-text strong {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            margin-bottom: 0.2rem;
+        }
+
+        .radio-text span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background-color: var(--danger-bg);
+            border: 1px solid var(--danger);
+            padding: 1rem;
+            border-radius: 2px;
+            color: #fca5a5; /* Lighter red for text on dark bg */
+            font-size: 0.8rem;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .warning-icon { 
+            font-size: 1.2rem; 
+            color: var(--danger);
+        }
+        
+        .warning-box strong {
+            color: var(--danger);
+            display: block;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Footer / Actions */
+        .actions {
+            background-color: transparent; /* Reset from light theme */
+            padding: 0 2.5rem 2.5rem 2.5rem;
+            border-top: none;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between; /* Match previous layout */
+        }
+
+        .btn {
+            padding: 0.85rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: 2px;
+            cursor: pointer;
+            border: none;
+            flex: 1;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+        .btn-secondary:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        /* Section override for the Critical section */
+        .section[style*="background-color: #fffafa;"] {
+            background-color: transparent !important; /* Override inline style from HTML */
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>System Initialization</h1>
+            <p>One-Time Owner Configuration. This setup cannot be reverted.</p>
+        </header>
+
+        <form action="#" method="POST">
+            
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">1. Institute Identity</span>
+                    <span class="section-id">CFG-ID-01</span>
+                </div>
+                <div class="form-group">
+                    <label for="institute_name">Official Legal Entity Name</label>
+                    <input type="text" id="institute_name" name="institute_name" placeholder="e.g. Apex Learning Solutions LLC" required>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="reg_id">Registration / Tax ID</label>
+                        <input type="text" id="reg_id" name="reg_id" placeholder="XX-XXXXXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="domain">Dedicated Subdomain</label>
+                        <input type="text" id="domain" name="domain" value=".kaizaro-edu.com" class="readonly-field" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">2. Owner Identity (Root Admin)</span>
+                    <span class="section-id">CFG-ID-02</span>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="owner_first">First Name</label>
+                        <input type="text" id="owner_first" name="owner_first" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="owner_last">Last Name</label>
+                        <input type="text" id="owner_last" name="owner_last" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="owner_email">Administrative Email</label>
+                    <input type="email" id="owner_email" name="owner_email" placeholder="admin@institute.com" required>
+                    <div class="helper-text">This email will receive all critical system alerts and audit logs.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">3. Hierarchical Permissions</span>
+                    <span class="section-id">CFG-ID-03</span>
+                </div>
+                <div class="form-group">
+                    <label>Sub-Admin Authority Level</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="perm_create" name="permissions" checked>
+                            <label for="perm_create">Can create new courses/batches</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="perm_delete" name="permissions">
+                            <label for="perm_delete">Can delete student data (Permanent)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="perm_finance" name="permissions">
+                            <label for="perm_finance">Can view financial dashboards</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="perm_export" name="permissions" checked>
+                            <label for="perm_export">Can export system logs</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">4. Access Control Policy</span>
+                    <span class="section-id">CFG-ID-04</span>
+                </div>
+                <div class="form-group">
+                    <label>Student Onboarding Method</label>
+                    <div class="radio-options">
+                        <label class="radio-option">
+                            <input type="radio" name="join_policy" value="open">
+                            <div class="radio-text">
+                                <strong>Open Access</strong>
+                                <span>Anyone with the Batch Code can join automatically.</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="join_policy" value="approval" checked>
+                            <div class="radio-text">
+                                <strong>Moderated Access</strong>
+                                <span>Students request access via Code; Admin must approve.</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="join_policy" value="manual">
+                            <div class="radio-text">
+                                <strong>Strict Manual Entry</strong>
+                                <span>Codes disabled. Admins must manually upload student rosters.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">5. Test Integrity & Governance</span>
+                    <span class="section-id">CFG-ID-05</span>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="max_attempts">Default Max Attempts</label>
+                        <select id="max_attempts" name="max_attempts">
+                            <option value="1">1 (Strict)</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="unlimited">Unlimited</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tab_switch">Tab Switching Tolerance</label>
+                        <select id="tab_switch" name="tab_switch">
+                            <option value="0">Zero Tolerance (Auto-Fail)</option>
+                            <option value="3" selected>Allow 3 Warnings</option>
+                            <option value="ignore">Ignore Tab Switching</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="data_retention">Result Data Retention (Months)</label>
+                    <input type="number" id="data_retention" name="data_retention" value="12" min="6" max="60">
+                </div>
+            </div>
+
+            <div class="section" style="background-color: #fffafa;">
+                <div class="section-header">
+                    <span class="section-title" style="color: var(--danger);">6. Final System Commit</span>
+                    <span class="section-id" style="color: var(--danger);">CRITICAL</span>
+                </div>
+                
+                <div class="warning-box">
+                    <span class="warning-icon">⚠</span>
+                    <div>
+                        <strong>Irreversible Action</strong>
+                        By clicking "Initialize System", you confirm that you are the legal owner of this institute. The Owner Identity cannot be transferred for 90 days. The Institute Name cannot be changed without support ticket escalation.
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="confirm_lock" required>
+                        <label for="confirm_lock">I certify that all information provided is accurate and I accept the Master Service Agreement.</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-secondary">Cancel Setup</button>
+                <button type="submit" class="btn btn-primary">Initialize System</button>
+            </div>
+
+        </form>
+    </div>
+<script src="setup-owner.js"></script>
+</body>
+</html>
