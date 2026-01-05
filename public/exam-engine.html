@@ -29,13 +29,14 @@
         /* --- MCQ OPTION CARDS (FIXED) --- */
         .options-grid { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
         .option-card {
-            background: #161616; border: 1px solid #333; padding: 18px 24px; border-radius: 12px;
+            background: #161616 !important; border: 1px solid #333 !important; 
+            padding: 18px 24px; border-radius: 12px;
             display: flex; align-items: center; gap: 20px; cursor: pointer; transition: all 0.2s ease;
         }
-        .option-card:hover { border-color: #666; background: #222; transform: translateX(5px); }
+        .option-card:hover { border-color: #666 !important; background: #222 !important; transform: translateX(5px); }
         
         .option-card.selected { 
-            border-color: var(--primary); background: rgba(59,130,246,0.1); 
+            border-color: var(--primary) !important; background: rgba(59,130,246,0.1) !important; 
             box-shadow: 0 0 15px rgba(59,130,246,0.1);
         }
 
