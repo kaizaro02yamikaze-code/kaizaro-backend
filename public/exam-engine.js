@@ -1,5 +1,6 @@
 /**
- * KAIZARO EXAM ENGINE - FINAL PHYSICS
+ * KAIZARO EXAM ENGINE - FINAL PHYSICS (OPTIMIZED)
+ * Features: Robust MCQ Rendering & Full 4-Step Carnot Cycle Simulation
  */
 'use strict';
 
@@ -15,7 +16,7 @@ const ExamEngine = {
     particleInterval: null,
     simStep: 0,
     synth: window.speechSynthesis,
-    particles: [], // Store particle elements
+    particles: [],
 
     init() {
         const rawData = localStorage.getItem("kaizaro_active_exam");
@@ -37,7 +38,7 @@ const ExamEngine = {
         if(window.lucide) lucide.createIcons();
     },
 
-    // --- 1. LEARNING MODE (ANIMATION) ---
+    // --- 1. LEARNING MODE (FULL CARNOT CYCLE) ---
     initLearningMode() {
         document.getElementById('exam-view').style.display = 'none';
         document.getElementById('exam-sidebar').style.display = 'none';
@@ -55,15 +56,13 @@ const ExamEngine = {
         box.innerHTML = '';
         this.particles = [];
         
-        // Generate 12 Particles
-        for(let i=0; i<12; i++) {
+        // 20 Particles for better visual
+        for(let i=0; i<20; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
-            // Random initial positions
             p.style.left = Math.random() * 90 + '%';
             p.style.top = Math.random() * 90 + '%';
             
-            // Random Velocities
             const vx = (Math.random() - 0.5) * 2;
             const vy = (Math.random() - 0.5) * 2;
             
@@ -75,26 +74,46 @@ const ExamEngine = {
     startSimulationLoop() {
         document.getElementById('start-sim-btn').style.display = 'none';
         
-        // Voice Active UI
-        document.getElementById('voice-indicator').style.background = '#10b981';
-        document.getElementById('voice-indicator').style.boxShadow = '0 0 10px #10b981';
-        document.getElementById('voice-status').innerText = "AI Tutor Speaking...";
+        // UI Indicators
+        const vInd = document.getElementById('voice-indicator');
+        vInd.style.background = '#10b981';
+        vInd.style.boxShadow = '0 0 10px #10b981';
+        document.getElementById('voice-status').innerText = "AI Tutor Explaining...";
         document.getElementById('voice-status').style.color = '#10b981';
 
+        // THE 4 STEPS OF CARNOT CYCLE
         const steps = [
             {
-                class: "state-compression",
-                label: "STEP 1: ADIABATIC COMPRESSION (High Pressure)",
-                temp: "800K (Rising)",
-                text: "The piston compresses the gas rapidly. Volume decreases, Pressure increases sharply. Work is done ON the gas, raising its temperature.",
-                speed: 3.5 // Fast particle speed
+                class: "state-iso-exp",
+                label: "STEP 1: ISOTHERMAL EXPANSION (Source T1)",
+                temp: "800K (Constant)",
+                work: "200 J",
+                text: "The engine absorbs heat from the high-temperature source (Q1). The gas expands isothermally, doing work on the piston. Internal energy remains constant.",
+                speed: 3 // High Energy
             },
             {
-                class: "state-expansion",
-                label: "STEP 2: ADIABATIC EXPANSION (Work Done)",
-                temp: "300K (Dropping)",
-                text: "The hot gas pushes the piston up, doing work on the wheel. Pressure drops, and the gas cools down significantly.",
-                speed: 0.8 // Slow particle speed
+                class: "state-adia-exp",
+                label: "STEP 2: ADIABATIC EXPANSION (Cooling)",
+                temp: "Dropping to 300K",
+                work: "350 J",
+                text: "The gas continues to expand but is now insulated. No heat enters or leaves. The expansion comes from internal energy, so the temperature drops drastically.",
+                speed: 1.5 // Slowing down
+            },
+            {
+                class: "state-iso-comp",
+                label: "STEP 3: ISOTHERMAL COMPRESSION (Sink T2)",
+                temp: "300K (Constant)",
+                work: "-150 J",
+                text: "The piston compresses the gas while in contact with the cold sink. Heat (Q2) is rejected to the sink to keep temperature constant at T2.",
+                speed: 1 // Low Energy
+            },
+            {
+                class: "state-adia-comp",
+                label: "STEP 4: ADIABATIC COMPRESSION (Heating)",
+                temp: "Rising to 800K",
+                work: "-100 J",
+                text: "Finally, the gas is compressed rapidly while insulated. No heat leaves. Work is done ON the gas, raising its temperature back to T1, completing the cycle.",
+                speed: 3 // Heating up again
             }
         ];
 
@@ -104,40 +123,46 @@ const ExamEngine = {
         const runStep = () => {
             const current = steps[this.simStep];
             
-            // Update Visuals
+            // Update CSS State
             document.getElementById('sim-container').className = "simulation-box " + current.class;
-            document.getElementById('temp-val').innerText = current.temp;
-            document.getElementById('step-label').innerText = current.label;
-            document.getElementById('note-text').innerText = current.text;
             
-            // Set Physics Speed
+            // Update Text Data
+            document.getElementById('temp-val').innerText = current.temp;
+            document.getElementById('work-val').innerText = current.work;
+            document.getElementById('step-label').innerText = current.label;
+            
+            // Update Note text with Fade effect
+            const noteEl = document.getElementById('note-text');
+            noteEl.style.opacity = 0;
+            setTimeout(() => {
+                noteEl.innerText = current.text;
+                noteEl.style.opacity = 1;
+            }, 300);
+            
             currentSpeed = current.speed;
             
-            // Speak
+            // AI Voice
             this.speak(current.text);
 
             this.simStep = (this.simStep + 1) % steps.length;
         };
 
         runStep();
-        this.simInterval = setInterval(runStep, 8000); // Change step every 8s
+        // Increased time to 12s to allow reading/speaking complete paragraph
+        this.simInterval = setInterval(runStep, 12000); 
 
-        // PHYSICS LOOP (60 FPS)
+        // Physics Particle Loop
         this.particleInterval = setInterval(() => {
             this.particles.forEach(p => {
-                // Update position
                 p.x += p.vx * currentSpeed;
                 p.y += p.vy * currentSpeed;
 
-                // Bounce off walls
                 if (p.x <= 0 || p.x >= 100) p.vx *= -1;
                 if (p.y <= 0 || p.y >= 100) p.vy *= -1;
 
-                // Keep inside
                 p.x = Math.max(0, Math.min(100, p.x));
                 p.y = Math.max(0, Math.min(100, p.y));
 
-                // Apply
                 p.el.style.left = p.x + '%';
                 p.el.style.top = p.y + '%';
             });
@@ -147,7 +172,7 @@ const ExamEngine = {
     speak(text) {
         if(this.synth.speaking) this.synth.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1; 
+        utterance.rate = 0.95; // Slightly slower for better clarity
         this.synth.speak(utterance);
     },
 
@@ -159,7 +184,7 @@ const ExamEngine = {
         window.location.href = "dashboard-student.html";
     },
 
-    // --- EXAM MODE ---
+    // --- 2. EXAM MODE (MCQ FIX) ---
     initExamMode() {
         document.getElementById('exam-view').style.display = 'block';
         document.getElementById('exam-sidebar').style.display = 'block';
@@ -178,17 +203,42 @@ const ExamEngine = {
         if (!this.sessionData.questions) return;
         this.currentQIndex = index;
         const q = this.sessionData.questions[index];
+        
+        // Update Q Text
         document.getElementById('q-num').innerText = index + 1;
         document.getElementById('q-content').innerText = q.text;
+        
+        // Render Options (FIXED)
         const container = document.getElementById('options-container');
         container.innerHTML = q.options.map((opt, i) => {
-            const selected = this.answers[index] === i ? 'selected' : '';
-            return `<div class="option-card ${selected}" onclick="ExamEngine.selectOption(${i})"><div class="option-circle"></div> ${opt}</div>`;
+            const selectedClass = this.answers[index] === i ? 'selected' : '';
+            return `
+                <div class="option-card ${selectedClass}" onclick="ExamEngine.selectOption(${i})">
+                    <div class="option-circle"></div>
+                    <div class="option-text" style="font-size:1rem; color:#e5e5e5;">${opt}</div>
+                </div>
+            `;
         }).join('');
+        
         this.updatePalette();
     },
 
-    selectOption(i) { this.answers[this.currentQIndex] = i; this.loadQuestion(this.currentQIndex); },
+    selectOption(i) {
+        this.answers[this.currentQIndex] = i;
+        this.loadQuestion(this.currentQIndex); // Re-render to show selection
+    },
+
+    nextQuestion() {
+        if (this.currentQIndex < this.sessionData.questions.length - 1) {
+            this.loadQuestion(this.currentQIndex + 1);
+        } else {
+            if(confirm("Submit Test?")) this.submitExam();
+        }
+    },
+
+    prevQuestion() {
+        if (this.currentQIndex > 0) this.loadQuestion(this.currentQIndex - 1);
+    },
 
     renderPalette() {
         document.getElementById('palette-container').innerHTML = this.sessionData.questions.map((_, i) => 
@@ -220,7 +270,15 @@ const ExamEngine = {
 
     submitExam() {
         clearInterval(this.timerInterval);
-        alert("Test Submitted!");
+        
+        // Score Calculation
+        let score = 0;
+        this.sessionData.questions.forEach((q, i) => {
+            if(this.answers[i] === q.correct) score += 4;
+            else if(this.answers[i] !== undefined) score -= 1;
+        });
+
+        alert(`Test Submitted!\nYour Score: ${score}`);
         this.exitSession();
     }
 };
