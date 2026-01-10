@@ -1,140 +1,454 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard | Kaizaro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="dashboard-student.js" defer></script>
+
 
     <style>
         :root {
-            --bg-body: #050505; --bg-sidebar: #000000; --bg-card: #0F0F0F; --bg-hover: #161616;
-            --border: #262626; --text-main: #f8fafc; --text-muted: #94a3b8;
-            --primary: #3b82f6; --primary-dim: rgba(59, 130, 246, 0.1);
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --bg-body: #050505;
+            --bg-sidebar: #000000;
+            --bg-card: #0F0F0F;
+            --bg-hover: #161616;
+            --border: #262626;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-dim: rgba(59, 130, 246, 0.1);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
             --radius: 12px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; outline: none; }
-        body { background-color: var(--bg-body); color: var(--text-main); display: grid; grid-template-columns: 260px 1fr; height: 100vh; overflow: hidden; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
 
         /* SIDEBAR */
-        aside { background-color: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
-        .brand { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
-        
-        .nav-link { 
-            display: flex; align-items: center; gap: 12px; padding: 12px; color: var(--text-muted); 
-            text-decoration: none; font-size: 0.9rem; font-weight: 500; border-radius: 8px; 
-            margin-bottom: 4px; transition: all 0.2s ease; cursor: pointer; 
+        aside {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .nav-link:hover { background: var(--bg-hover); color: white; }
-        .nav-link.active { background: var(--bg-hover); color: var(--primary); border-left: 3px solid var(--primary); }
-        
-        .profile-mini { border-top: 1px solid var(--border); padding-top: 20px; display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 36px; height: 36px; background: #262626; border-radius: 50%; display: grid; place-items: center; font-size: 0.85rem; font-weight: 700; color: white; }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-hover);
+            color: white;
+        }
+
+        .nav-link.active {
+            background: var(--bg-hover);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+
+        .profile-mini {
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: #262626;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+        }
 
         /* MAIN CONTENT */
-        main { padding: 32px; overflow-y: auto; position: relative; }
-        .view-section { display: none; animation: fadeIn 0.4s ease; }
-        .view-section.active { display: block; }
+        main {
+            padding: 32px;
+            overflow-y: auto;
+            position: relative;
+        }
 
-        .top-header { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
-        .welcome-text h1 { font-size: 1.75rem; font-weight: 700; color: white; }
-        .welcome-text p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
-        
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        .welcome-text h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .welcome-text p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
         /* CARDS & GRID */
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .stats-row { display: flex; gap: 16px; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 12px 24px; border-radius: 8px; text-align: center; min-width: 130px; }
-        .stat-val { font-size: 1.5rem; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; }
-        .stat-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 130px;
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+            font-weight: 600;
+        }
 
         /* AI INSIGHT CARD */
-        .ai-analysis { 
-            background: linear-gradient(145deg, #0F0F0F 0%, #050505 100%); 
-            border: 1px solid var(--border); border-left: 4px solid var(--primary); 
-            padding: 24px; border-radius: var(--radius); margin-bottom: 32px; 
+        .ai-analysis {
+            background: linear-gradient(145deg, #0F0F0F 0%, #050505 100%);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            padding: 24px;
+            border-radius: var(--radius);
+            margin-bottom: 32px;
         }
-        .ai-tag { 
-            display: inline-flex; align-items: center; gap: 6px; 
-            background: var(--primary-dim); color: var(--primary); 
-            font-size: 0.7rem; font-weight: 700; padding: 6px 12px; 
-            border-radius: 20px; margin-bottom: 16px; 
+
+        .ai-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-dim);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
         }
-        
+
         /* --- VISUAL LEARNING PLAYER (NEW CSS) --- */
         .video-player {
-            position: relative; width: 100%; height: 350px;
+            position: relative;
+            width: 100%;
+            height: 350px;
             background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
-            border-radius: 12px; border: 1px solid var(--border);
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; margin-bottom: 20px; cursor: pointer;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 20px;
+            cursor: pointer;
             transition: border-color 0.3s;
         }
-        .video-player:hover { border-color: var(--primary); }
+
+        .video-player:hover {
+            border-color: var(--primary);
+        }
+
         .play-btn {
-            width: 70px; height: 70px; background: rgba(59, 130, 246, 0.9);
-            border-radius: 50%; display: grid; place-items: center;
+            width: 70px;
+            height: 70px;
+            background: rgba(59, 130, 246, 0.9);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
             box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
-            transition: transform 0.2s; z-index: 2;
+            transition: transform 0.2s;
+            z-index: 2;
         }
-        .video-player:hover .play-btn { transform: scale(1.1); }
-        
+
+        .video-player:hover .play-btn {
+            transform: scale(1.1);
+        }
+
         .video-overlay {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-            display: flex; justify-content: space-between; align-items: flex-end;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
         }
-        .video-meta h3 { color: white; font-size: 1.1rem; margin-bottom: 5px; }
-        .video-meta p { color: #ccc; font-size: 0.85rem; }
-        
+
+        .video-meta h3 {
+            color: white;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .video-meta p {
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+
         /* VISUAL NOTE CARD */
-        .visual-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
         .visual-card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 12px; overflow: hidden; transition: transform 0.2s;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s;
         }
-        .visual-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+
+        .visual-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
         .visual-thumb {
-            height: 140px; background: #1a1a1a; position: relative;
+            height: 140px;
+            background: #1a1a1a;
+            position: relative;
             background-image: radial-gradient(#333 1px, transparent 1px);
-            background-size: 20px 20px; display: grid; place-items: center;
+            background-size: 20px 20px;
+            display: grid;
+            place-items: center;
         }
-        .visual-body { padding: 20px; }
-        .tag-pill { background: #222; color: #aaa; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; }
+
+        .visual-body {
+            padding: 20px;
+        }
+
+        .tag-pill {
+            background: #222;
+            color: #aaa;
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
 
         /* BUTTONS */
-        .btn-primary { background: var(--primary); color: white; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-        .btn-outline:hover { color: white; border-color: white; }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-outline:hover {
+            color: white;
+            border-color: white;
+        }
 
         /* CHAT & MODAL */
-        .fab-ai { position: fixed; bottom: 30px; right: 30px; width: 56px; height: 56px; background: var(--primary); border-radius: 50%; display: grid; place-items: center; cursor: pointer; z-index: 100; box-shadow: 0 0 20px rgba(59,130,246,0.4); }
-        
-        .chat-panel { position: fixed; bottom: 100px; right: 30px; width: 380px; height: 550px; background: #141414; border: 1px solid var(--border); border-radius: 16px; display: none; flex-direction: column; z-index: 99; }
-        .chat-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; border-radius: 16px 16px 0 0; }
-        .chat-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
-        .chat-footer { padding: 16px; border-top: 1px solid var(--border); display: flex; gap: 12px; background: #1a1a1a; border-radius: 0 0 16px 16px; }
-        .chat-input { flex: 1; background: #0a0a0a; border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; color: white; }
-        .msg { padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; }
-        .msg-ai { background: #262626; color: #e5e5e5; align-self: flex-start; }
-        .msg-user { background: var(--primary); color: white; align-self: flex-end; }
+        .fab-ai {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            height: 550px;
+            background: #141414;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: none;
+            flex-direction: column;
+            z-index: 99;
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            background: #1a1a1a;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .msg {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            max-width: 85%;
+        }
+
+        .msg-ai {
+            background: #262626;
+            color: #e5e5e5;
+            align-self: flex-start;
+        }
+
+        .msg-user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <aside>
         <div>
             <div class="brand"><i data-lucide="layers"></i> KAIZARO OS</div>
             <nav>
-                <div class="nav-link active" onclick="switchTab('overview', this)"><i data-lucide="layout-dashboard" size="18"></i> Dashboard</div>
-                <div class="nav-link" onclick="switchTab('learn', this)"><i data-lucide="monitor-play" size="18"></i> Visual Learning</div>
-                <div class="nav-link" onclick="switchTab('assessments', this)"><i data-lucide="file-check" size="18"></i> Assessments</div>
-                <div class="nav-link" onclick="switchTab('resources', this)"><i data-lucide="library" size="18"></i> Resources</div>
+                <div class="nav-link active" onclick="switchTab('overview', this)"><i data-lucide="layout-dashboard"
+                        size="18"></i> Dashboard</div>
+                <div class="nav-link" onclick="switchTab('learn', this)"><i data-lucide="monitor-play" size="18"></i>
+                    Visual Learning</div>
+                <div class="nav-link" onclick="switchTab('assessments', this)"><i data-lucide="file-check"
+                        size="18"></i> Assessments</div>
+                <div class="nav-link" onclick="switchTab('resources', this)"><i data-lucide="library" size="18"></i>
+                    Resources</div>
             </nav>
         </div>
         <div class="profile-mini">
@@ -149,10 +463,19 @@
     <main>
         <div id="view-overview" class="view-section active">
             <div class="top-header">
-                <div class="welcome-text"><h1>Overview</h1><p>AI-Powered Learning Dashboard</p></div>
+                <div class="welcome-text">
+                    <h1>Overview</h1>
+                    <p>AI-Powered Learning Dashboard</p>
+                </div>
                 <div class="stats-row">
-                    <div class="stat-card"><div class="stat-val" id="disp-avg">--</div><div class="stat-lbl">Avg Score</div></div>
-                    <div class="stat-card"><div class="stat-val" id="disp-count">0</div><div class="stat-lbl">Tests Taken</div></div>
+                    <div class="stat-card">
+                        <div class="stat-val" id="disp-avg">--</div>
+                        <div class="stat-lbl">Avg Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val" id="disp-count">0</div>
+                        <div class="stat-lbl">Tests Taken</div>
+                    </div>
                 </div>
             </div>
 
@@ -177,12 +500,13 @@
             </div>
 
             <h3 style="color:white; margin-bottom:15px; font-size:1rem;">Featured Simulation</h3>
-            
+
             <div class="video-player" onclick="StudentApp.playSimulation(this)">
                 <div class="play-btn"><i data-lucide="play" fill="white" stroke="none"></i></div>
                 <div class="video-overlay">
                     <div class="video-meta">
-                        <span style="background:#ef4444; color:white; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold; margin-bottom:6px; display:inline-block;">INTERACTIVE</span>
+                        <span
+                            style="background:#ef4444; color:white; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold; margin-bottom:6px; display:inline-block;">INTERACTIVE</span>
                         <h3>Thermodynamics: Carnot Cycle</h3>
                         <p>Visualize Isothermal and Adiabatic expansion in real-time.</p>
                     </div>
@@ -201,7 +525,8 @@
                             <h4 style="color:white; font-weight:600;">Laws of Motion Mind Map</h4>
                             <span class="tag-pill">Physics</span>
                         </div>
-                        <p style="color:#888; font-size:0.85rem; margin-bottom:15px;">High-contrast connectors for Newton's 3 laws.</p>
+                        <p style="color:#888; font-size:0.85rem; margin-bottom:15px;">High-contrast connectors for
+                            Newton's 3 laws.</p>
                         <button class="btn-outline" style="width:100%;">Open Visual</button>
                     </div>
                 </div>
@@ -214,7 +539,8 @@
                             <h4 style="color:white; font-weight:600;">Atomic Structure 3D</h4>
                             <span class="tag-pill">Chemistry</span>
                         </div>
-                        <p style="color:#888; font-size:0.85rem; margin-bottom:15px;">Orbitals visualization (s, p, d, f blocks).</p>
+                        <p style="color:#888; font-size:0.85rem; margin-bottom:15px;">Orbitals visualization (s, p, d, f
+                            blocks).</p>
                         <button class="btn-outline" style="width:100%;">Open Visual</button>
                     </div>
                 </div>
@@ -222,16 +548,25 @@
         </div>
 
         <div id="view-assessments" class="view-section">
-            <div class="top-header"><div class="welcome-text"><h1>Assessments</h1></div></div>
+            <div class="top-header">
+                <div class="welcome-text">
+                    <h1>Assessments</h1>
+                </div>
+            </div>
             <div class="card" style="padding:0;">
                 <div id="assessments-list"></div>
             </div>
         </div>
 
         <div id="view-resources" class="view-section">
-            <div class="top-header"><div class="welcome-text"><h1>Resources</h1></div></div>
+            <div class="top-header">
+                <div class="welcome-text">
+                    <h1>Resources</h1>
+                </div>
+            </div>
             <div class="card" style="padding:0;">
-                <div class="list-item" style="padding:15px; border-bottom:1px solid #222; display:flex; justify-content:space-between;">
+                <div class="list-item"
+                    style="padding:15px; border-bottom:1px solid #222; display:flex; justify-content:space-between;">
                     <div style="display:flex; gap:10px; align-items:center;">
                         <i data-lucide="file-text" color="#888"></i>
                         <span style="color:white;">H.C. Verma Solutions (Vol 1)</span>
@@ -244,20 +579,27 @@
 
     <div class="fab-ai" onclick="toggleChat()"><i data-lucide="bot" color="white" size="28"></i></div>
     <div class="chat-panel" id="chat-panel">
-        <div class="chat-header"><span>AI Study Agent</span><i data-lucide="x" onclick="toggleChat()" style="cursor:pointer"></i></div>
-        <div class="chat-body" id="chat-body"><div class="msg msg-ai">Hello! I can explain the Carnot Cycle video you just saw. Ask me anything!</div></div>
+        <div class="chat-header"><span>AI Study Agent</span><i data-lucide="x" onclick="toggleChat()"
+                style="cursor:pointer"></i></div>
+        <div class="chat-body" id="chat-body">
+            <div class="msg msg-ai">Hello! I can explain the Carnot Cycle video you just saw. Ask me anything!</div>
+        </div>
         <div class="chat-footer">
-            <input type="text" class="chat-input" id="chat-input" placeholder="Type here..." onkeypress="handleEnter(event)">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Type here..."
+                onkeypress="handleEnter(event)">
             <button class="btn-primary" onclick="sendMessage()"><i data-lucide="send" size="16"></i></button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="report-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; place-items:center; z-index:200;">
-        <div style="background:#111; width:400px; padding:30px; border-radius:12px; border:1px solid #333; text-align:center;">
+    <div class="modal-overlay" id="report-modal"
+        style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; place-items:center; z-index:200;">
+        <div
+            style="background:#111; width:400px; padding:30px; border-radius:12px; border:1px solid #333; text-align:center;">
             <h2 style="color:white;" id="r-title">Report</h2>
             <div style="font-size:3rem; color:var(--success); font-weight:700; margin:10px 0;" id="r-score">0%</div>
             <p style="color:#aaa; margin-bottom:20px;" id="r-analysis">...</p>
-            <button class="btn-primary" onclick="document.getElementById('report-modal').style.display='none'">Close</button>
+            <button class="btn-primary"
+                onclick="document.getElementById('report-modal').style.display='none'">Close</button>
         </div>
     </div>
 
@@ -265,15 +607,20 @@
         lucide.createIcons();
         function switchTab(id, el) {
             document.querySelectorAll('.view-section').forEach(d => d.classList.remove('active'));
-            document.getElementById('view-'+id).classList.add('active');
+            document.getElementById('view-' + id).classList.add('active');
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             el.classList.add('active');
         }
-        function toggleChat() { 
+        function toggleChat() {
             const p = document.getElementById('chat-panel');
             p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/aiLogic.js"></script>
     <script src="dashboard-student.js"></script>
 </body>
+
 </html>

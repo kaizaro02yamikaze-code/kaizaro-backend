@@ -1,16 +1,17 @@
+
 /**
- * KAIZARO EXAM ENGINE - FINAL PHYSICS (OPTIMIZED)
- * Features: Robust MCQ Rendering & Full 4-Step Carnot Cycle Simulation
+ * KAIZARO EXAM ENGINE - SUPABASE INTEGRATED
  */
 'use strict';
 
 const ExamEngine = {
     sessionData: null,
+    userProfile: null,
     currentQIndex: 0,
     answers: {},
     timeLeft: 0,
     timerInterval: null,
-    
+
     // Simulation Vars
     simInterval: null,
     particleInterval: null,
@@ -18,7 +19,12 @@ const ExamEngine = {
     synth: window.speechSynthesis,
     particles: [],
 
-    init() {
+    async init() {
+        // 1. Session Check (Needed for submission)
+        const session = await window.utils.checkSession();
+        if (!session) return;
+        this.userProfile = session.userProfile;
+
         const rawData = localStorage.getItem("kaizaro_active_exam");
         if (!rawData) {
             alert("No Session Data Found!");
@@ -34,8 +40,8 @@ const ExamEngine = {
         } else {
             this.initExamMode();
         }
-        
-        if(window.lucide) lucide.createIcons();
+
+        if (window.lucide) lucide.createIcons();
     },
 
     // --- 1. LEARNING MODE (FULL CARNOT CYCLE) ---
@@ -44,7 +50,7 @@ const ExamEngine = {
         document.getElementById('exam-sidebar').style.display = 'none';
         document.getElementById('timer-display').style.visibility = 'hidden';
         document.getElementById('exam-buttons').style.display = 'none';
-        
+
         document.getElementById('learning-view').style.display = 'flex';
         document.getElementById('learning-sidebar').style.display = 'flex';
 
@@ -55,17 +61,17 @@ const ExamEngine = {
         const box = document.getElementById('particle-box');
         box.innerHTML = '';
         this.particles = [];
-        
+
         // 20 Particles for better visual
-        for(let i=0; i<20; i++) {
+        for (let i = 0; i < 20; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
             p.style.left = Math.random() * 90 + '%';
             p.style.top = Math.random() * 90 + '%';
-            
+
             const vx = (Math.random() - 0.5) * 2;
             const vy = (Math.random() - 0.5) * 2;
-            
+
             this.particles.push({ el: p, x: Math.random() * 100, y: Math.random() * 100, vx, vy });
             box.appendChild(p);
         }
@@ -73,7 +79,7 @@ const ExamEngine = {
 
     startSimulationLoop() {
         document.getElementById('start-sim-btn').style.display = 'none';
-        
+
         // UI Indicators
         const vInd = document.getElementById('voice-indicator');
         vInd.style.background = '#10b981';
@@ -122,15 +128,15 @@ const ExamEngine = {
 
         const runStep = () => {
             const current = steps[this.simStep];
-            
+
             // Update CSS State
             document.getElementById('sim-container').className = "simulation-box " + current.class;
-            
+
             // Update Text Data
             document.getElementById('temp-val').innerText = current.temp;
             document.getElementById('work-val').innerText = current.work;
             document.getElementById('step-label').innerText = current.label;
-            
+
             // Update Note text with Fade effect
             const noteEl = document.getElementById('note-text');
             noteEl.style.opacity = 0;
@@ -138,9 +144,9 @@ const ExamEngine = {
                 noteEl.innerText = current.text;
                 noteEl.style.opacity = 1;
             }, 300);
-            
+
             currentSpeed = current.speed;
-            
+
             // AI Voice
             this.speak(current.text);
 
@@ -149,7 +155,7 @@ const ExamEngine = {
 
         runStep();
         // Increased time to 12s to allow reading/speaking complete paragraph
-        this.simInterval = setInterval(runStep, 12000); 
+        this.simInterval = setInterval(runStep, 12000);
 
         // Physics Particle Loop
         this.particleInterval = setInterval(() => {
@@ -170,21 +176,21 @@ const ExamEngine = {
     },
 
     speak(text) {
-        if(this.synth.speaking) this.synth.cancel();
+        if (this.synth.speaking) this.synth.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 0.95; // Slightly slower for better clarity
         this.synth.speak(utterance);
     },
 
     exitSession() {
-        if(this.simInterval) clearInterval(this.simInterval);
-        if(this.particleInterval) clearInterval(this.particleInterval);
-        if(this.timerInterval) clearInterval(this.timerInterval);
-        if(this.synth.speaking) this.synth.cancel();
+        if (this.simInterval) clearInterval(this.simInterval);
+        if (this.particleInterval) clearInterval(this.particleInterval);
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        if (this.synth.speaking) this.synth.cancel();
         window.location.href = "dashboard-student.html";
     },
 
-    // --- 2. EXAM MODE (MCQ FIX) ---
+    // --- 2. EXAM MODE ---
     initExamMode() {
         document.getElementById('exam-view').style.display = 'block';
         document.getElementById('exam-sidebar').style.display = 'block';
@@ -203,12 +209,12 @@ const ExamEngine = {
         if (!this.sessionData.questions) return;
         this.currentQIndex = index;
         const q = this.sessionData.questions[index];
-        
+
         // Update Q Text
         document.getElementById('q-num').innerText = index + 1;
         document.getElementById('q-content').innerText = q.text;
-        
-        // Render Options (FIXED)
+
+        // Render Options
         const container = document.getElementById('options-container');
         container.innerHTML = q.options.map((opt, i) => {
             const selectedClass = this.answers[index] === i ? 'selected' : '';
@@ -219,7 +225,7 @@ const ExamEngine = {
                 </div>
             `;
         }).join('');
-        
+
         this.updatePalette();
     },
 
@@ -232,7 +238,7 @@ const ExamEngine = {
         if (this.currentQIndex < this.sessionData.questions.length - 1) {
             this.loadQuestion(this.currentQIndex + 1);
         } else {
-            if(confirm("Submit Test?")) this.submitExam();
+            if (confirm("Submit Test?")) this.submitExam();
         }
     },
 
@@ -241,18 +247,18 @@ const ExamEngine = {
     },
 
     renderPalette() {
-        document.getElementById('palette-container').innerHTML = this.sessionData.questions.map((_, i) => 
-            `<div id="p-${i}" class="q-btn" onclick="ExamEngine.loadQuestion(${i})">${i+1}</div>`
+        document.getElementById('palette-container').innerHTML = this.sessionData.questions.map((_, i) =>
+            `<div id="p-${i}" class="q-btn" onclick="ExamEngine.loadQuestion(${i})">${i + 1}</div>`
         ).join('');
     },
 
     updatePalette() {
         this.sessionData.questions.forEach((_, i) => {
             const btn = document.getElementById(`p-${i}`);
-            if(btn) {
+            if (btn) {
                 btn.className = 'q-btn';
-                if(i === this.currentQIndex) btn.classList.add('current');
-                if(this.answers[i] !== undefined) btn.classList.add('answered');
+                if (i === this.currentQIndex) btn.classList.add('current');
+                if (this.answers[i] !== undefined) btn.classList.add('answered');
             }
         });
     },
@@ -263,23 +269,82 @@ const ExamEngine = {
             this.timeLeft--;
             const m = Math.floor(this.timeLeft / 60).toString().padStart(2, '0');
             const s = (this.timeLeft % 60).toString().padStart(2, '0');
-            if(display) display.innerHTML = `<i data-lucide="clock" size="18"></i> ${m}:${s}`;
+            if (display) display.innerHTML = `<i data-lucide="clock" size="18"></i> ${m}:${s}`;
             if (this.timeLeft <= 0) this.submitExam();
         }, 1000);
     },
 
-    submitExam() {
+    async submitExam() {
         clearInterval(this.timerInterval);
-        
-        // Score Calculation
+
+        const nextBtn = document.getElementById('btn-next');
+        const originalText = nextBtn.innerText;
+        nextBtn.innerText = "Submitting...";
+        nextBtn.disabled = true;
+
+        // 1. Calculate Local Score
         let score = 0;
+        const answersPayload = [];
+
         this.sessionData.questions.forEach((q, i) => {
-            if(this.answers[i] === q.correct) score += 4;
-            else if(this.answers[i] !== undefined) score -= 1;
+            const selected = this.answers[i];
+            const isCorrect = (selected === q.correct);
+            if (isCorrect) score += 4;
+            // else if (selected !== undefined) score -= 1; // Negative marking optional
+
+            if (selected !== undefined) {
+                answersPayload.push({
+                    attempt_id: null, // Will fill after attempt creation
+                    question_id: q.id, // Assuming sessionData.questions has 'id'
+                    selected_option: q.options[selected], // Store text or index? Schema said 'text'.
+                    is_correct: isCorrect
+                });
+            }
         });
 
-        alert(`Test Submitted!\nYour Score: ${score}`);
-        this.exitSession();
+        // 2. Risk Calculation
+        const risk = window.AICore.calculateRisk(score);
+
+        try {
+            const client = window.supabaseClient;
+
+            // 3. Create Attempt
+            const { data: attempt, error: attErr } = await client
+                .from('attempts')
+                .insert({
+                    test_id: this.sessionData.id,
+                    student_id: this.userProfile.id, // Auth user? or student profile id?
+                    // userProfile.user_id vs userProfile.id. 
+                    // student_profiles table primary key is ID? Or user_id?
+                    // Schema: attempts(student_id REFERENCES public.users(id)). 
+                    // So we use auth user id (which is userProfile.user_id if loaded from checkSession).
+                    // checkSession returns session, and userProfile (from 'users' table).
+                    // The 'users' table ID matches auth.uid().
+                    student_id: this.userProfile.id,
+                    score: score,
+                    risk_level: risk
+                })
+                .select()
+                .single();
+
+            if (attErr) throw attErr;
+
+            // 4. Create Answers
+            if (answersPayload.length > 0) {
+                const finalPayload = answersPayload.map(a => ({ ...a, attempt_id: attempt.id }));
+                const { error: ansErr } = await client.from('answers').insert(finalPayload);
+                if (ansErr) throw ansErr;
+            }
+
+            alert(`Test Submitted!\nYour Score: ${score}`);
+            window.location.href = `dashboard-student.html?testSubmitted=true`;
+
+        } catch (e) {
+            console.error("Submission Error", e);
+            alert("Error submitting exam: " + e.message);
+            nextBtn.innerText = originalText;
+            nextBtn.disabled = false;
+        }
     }
 };
 

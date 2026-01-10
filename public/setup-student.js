@@ -1,118 +1,64 @@
-/**
- * STUDENT EXAM ACCESS GATEWAY (TEST MODE)
- * ---------------------------------------
- * Relaxed validation for easy testing.
- * Accepts ANY batch code > 1 char.
- * Auto-redirects to dashboard-student.html
- */
 
-'use strict';
+document.addEventListener('DOMContentLoaded', async () => {
 
-document.addEventListener('DOMContentLoaded', () => {
-    ExamGate.init();
-});
+    const client = window.supabaseClient;
+    const { data: { session } } = await client.auth.getSession();
 
-// --- 1. MOCK DATABASE (SIMPLIFIED) ---
-const MockDB = {
-    // We will dynamically accept any code for testing
-    activeSessions: new Set()
-};
-
-// --- 2. CORE LOGIC ---
-const ExamGate = {
-    elements: {},
-
-    init() {
-        this.cacheDOM();
-        this.bindEvents();
-    },
-
-    cacheDOM() {
-        this.elements = {
-            form: document.querySelector('form'),
-            inputs: document.querySelectorAll('input[type="text"]'),
-            batchInput: document.querySelector('.batch-input'),
-            checkboxes: document.querySelectorAll('input[type="checkbox"]'),
-            btnProceed: document.querySelector('.btn-proceed')
-        };
-    },
-
-    bindEvents() {
-        // 1. Real-time Validation
-        this.elements.form.addEventListener('input', () => this.checkFormState());
-        
-        // 2. Batch Code Formatting (Optional Uppercase)
-        if (this.elements.batchInput) {
-            this.elements.batchInput.addEventListener('input', (e) => {
-                e.target.value = e.target.value.toUpperCase();
-            });
-        }
-
-        // 3. Form Submission
-        this.elements.form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleEntryAttempt();
-        });
-    },
-
-    checkFormState() {
-        // Check text inputs
-        let allTextFilled = true;
-        this.elements.inputs.forEach(input => {
-            if (input.value.trim().length < 1) allTextFilled = false;
-        });
-
-        // Check checkboxes
-        let allChecked = true;
-        this.elements.checkboxes.forEach(cb => {
-            if (!cb.checked) allChecked = false;
-        });
-
-        // Update Button State
-        if (allTextFilled && allChecked) {
-            this.elements.btnProceed.disabled = false;
-            this.elements.btnProceed.style.opacity = "1";
-            this.elements.btnProceed.style.cursor = "pointer";
-        } else {
-            this.elements.btnProceed.disabled = true;
-            this.elements.btnProceed.style.opacity = "0.5";
-            this.elements.btnProceed.style.cursor = "not-allowed";
-        }
-    },
-
-    handleEntryAttempt() {
-        const btn = this.elements.btnProceed;
-        const originalText = btn.innerText;
-        const batchCode = this.elements.batchInput.value.trim();
-
-        // UI Loading Simulation
-        btn.innerText = "Connecting...";
-        btn.disabled = true;
-
-        setTimeout(() => {
-            // *** RELAXED LOGIC: ALWAYS SUCCESS FOR TESTING ***
-            
-            const studentData = {
-                name: this.elements.inputs[0].value,
-                roll: this.elements.inputs[2].value,
-                batch: batchCode, 
-                subject: "Mock Test Subject",
-                startTime: Date.now()
-            };
-
-            // Save Session
-            sessionStorage.setItem('active_exam_session', JSON.stringify(studentData));
-
-            // Success UI
-            btn.innerText = "Access Granted ✓";
-            btn.style.backgroundColor = "#10b981";
-
-            // REDIRECT TO DASHBOARD
-            setTimeout(() => {
-                // Yahan direct redirection lagaya hai
-                window.location.href = 'dashboard-student.html'; 
-            }, 500);
-
-        }, 800); // Small delay for realism
+    if (!session) {
+        window.location.href = 'index.html';
+        return;
     }
-};
+
+    const form = document.getElementById('studentSetupForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.querySelector('.btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = "Joining...";
+            btn.disabled = true;
+
+            try {
+                const batchCode = document.getElementById('batch_code').value;
+                const fullName = document.getElementById('full_name').value;
+
+                // 1. Verify Batch Code
+                const { data: batch, error: bErr } = await client
+                    .from('batches')
+                    .select('id, institute_id')
+                    .eq('code', batchCode)
+                    .single();
+
+                if (bErr || !batch) {
+                    throw new Error("Invalid Batch Code");
+                }
+
+                // 2. Upsert User
+                const { error: uErr } = await client.from('users').upsert({
+                    id: session.user.id,
+                    email: session.user.email,
+                    full_name: fullName,
+                    role: 'student'
+                });
+                if (uErr) throw uErr;
+
+                // 3. Create Student Profile
+                const { error: sErr } = await client.from('student_profiles').insert({
+                    user_id: session.user.id,
+                    batch_id: batch.id
+                });
+                if (sErr) throw sErr;
+
+                window.utils.showToast("Joined Successfully!", "success");
+                setTimeout(() => window.location.href = 'dashboard-student.html', 1500);
+
+            } catch (err) {
+                console.error(err);
+                window.utils.showToast(err.message, "error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+    }
+});

@@ -32,7 +32,16 @@ app.get('/health', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`\n🚀 KAIZARO SERVER STARTED`);
     console.log(`👉 Live Link: http://localhost:${PORT}`);
+});
+
+server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+        console.error(`\n❌ Port ${PORT} is already in use.`);
+        console.error(`👉 Try running: npx kill-port ${PORT} OR change PORT in .env`);
+    } else {
+        console.error(e);
+    }
 });

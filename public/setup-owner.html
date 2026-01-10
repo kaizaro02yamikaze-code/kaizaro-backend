@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Owner Configuration | System Setup</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
         /* --- EXACT DARK THEME CSS --- */
         :root {
@@ -51,7 +52,8 @@
 
         /* Header */
         .header {
-            background-color: transparent; /* Removed dark header bg to match card style */
+            background-color: transparent;
+            /* Removed dark header bg to match card style */
             padding: 2.5rem 2.5rem 1.5rem 2.5rem;
             border-bottom: 1px solid var(--border-color);
         }
@@ -143,7 +145,8 @@
             outline: none;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             border-color: var(--primary);
         }
 
@@ -173,14 +176,18 @@
             align-items: center;
             margin-bottom: 0.75rem;
         }
-        .checkbox-item:last-child { margin-bottom: 0; }
+
+        .checkbox-item:last-child {
+            margin-bottom: 0;
+        }
 
         .checkbox-item input[type="checkbox"] {
             width: auto;
             margin-right: 0.75rem;
             accent-color: var(--primary);
             cursor: pointer;
-            transform: none; /* Reset scale from old CSS */
+            transform: none;
+            /* Reset scale from old CSS */
         }
 
         .checkbox-item label {
@@ -202,7 +209,8 @@
 
         .radio-option {
             display: flex;
-            align-items: flex-start; /* Align top for multi-line text */
+            align-items: flex-start;
+            /* Align top for multi-line text */
             padding: 1rem;
             background-color: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border-color);
@@ -217,7 +225,8 @@
 
         .radio-option input {
             margin-right: 1rem;
-            margin-top: 0.25rem; /* Align with title */
+            margin-top: 0.25rem;
+            /* Align with title */
             accent-color: var(--primary);
         }
 
@@ -244,7 +253,8 @@
             border: 1px solid var(--danger);
             padding: 1rem;
             border-radius: 2px;
-            color: #fca5a5; /* Lighter red for text on dark bg */
+            color: #fca5a5;
+            /* Lighter red for text on dark bg */
             font-size: 0.8rem;
             display: flex;
             gap: 10px;
@@ -252,11 +262,11 @@
             margin-bottom: 1.5rem;
         }
 
-        .warning-icon { 
-            font-size: 1.2rem; 
+        .warning-icon {
+            font-size: 1.2rem;
             color: var(--danger);
         }
-        
+
         .warning-box strong {
             color: var(--danger);
             display: block;
@@ -268,12 +278,14 @@
 
         /* Footer / Actions */
         .actions {
-            background-color: transparent; /* Reset from light theme */
+            background-color: transparent;
+            /* Reset from light theme */
             padding: 0 2.5rem 2.5rem 2.5rem;
             border-top: none;
             display: flex;
             gap: 1rem;
-            justify-content: space-between; /* Match previous layout */
+            justify-content: space-between;
+            /* Match previous layout */
         }
 
         .btn {
@@ -295,6 +307,7 @@
             color: white;
             border: none;
         }
+
         .btn-primary:hover {
             background-color: var(--primary-hover);
         }
@@ -304,6 +317,7 @@
             border: 1px solid var(--border-color);
             color: var(--text-muted);
         }
+
         .btn-secondary:hover {
             border-color: var(--text-main);
             color: var(--text-main);
@@ -311,11 +325,13 @@
 
         /* Section override for the Critical section */
         .section[style*="background-color: #fffafa;"] {
-            background-color: transparent !important; /* Override inline style from HTML */
+            background-color: transparent !important;
+            /* Override inline style from HTML */
             border-bottom: none;
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -325,7 +341,7 @@
         </header>
 
         <form action="#" method="POST">
-            
+
             <div class="section">
                 <div class="section-header">
                     <span class="section-title">1. Institute Identity</span>
@@ -333,7 +349,8 @@
                 </div>
                 <div class="form-group">
                     <label for="institute_name">Official Legal Entity Name</label>
-                    <input type="text" id="institute_name" name="institute_name" placeholder="e.g. Apex Learning Solutions LLC" required>
+                    <input type="text" id="institute_name" name="institute_name"
+                        placeholder="e.g. Apex Learning Solutions LLC" required>
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
@@ -342,7 +359,8 @@
                     </div>
                     <div class="form-group">
                         <label for="domain">Dedicated Subdomain</label>
-                        <input type="text" id="domain" name="domain" value=".kaizaro-edu.com" class="readonly-field" readonly>
+                        <input type="text" id="domain" name="domain" value=".kaizaro-edu.com" class="readonly-field"
+                            readonly>
                     </div>
                 </div>
             </div>
@@ -465,19 +483,22 @@
                     <span class="section-title" style="color: var(--danger);">6. Final System Commit</span>
                     <span class="section-id" style="color: var(--danger);">CRITICAL</span>
                 </div>
-                
+
                 <div class="warning-box">
                     <span class="warning-icon">⚠</span>
                     <div>
                         <strong>Irreversible Action</strong>
-                        By clicking "Initialize System", you confirm that you are the legal owner of this institute. The Owner Identity cannot be transferred for 90 days. The Institute Name cannot be changed without support ticket escalation.
+                        By clicking "Initialize System", you confirm that you are the legal owner of this institute. The
+                        Owner Identity cannot be transferred for 90 days. The Institute Name cannot be changed without
+                        support ticket escalation.
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
                     <div class="checkbox-item">
                         <input type="checkbox" id="confirm_lock" required>
-                        <label for="confirm_lock">I certify that all information provided is accurate and I accept the Master Service Agreement.</label>
+                        <label for="confirm_lock">I certify that all information provided is accurate and I accept the
+                            Master Service Agreement.</label>
                     </div>
                 </div>
             </div>
@@ -489,6 +510,10 @@
 
         </form>
     </div>
-<script src="setup-owner.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="setup-owner.js"></script>
 </body>
+
 </html>

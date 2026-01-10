@@ -1,41 +1,26 @@
+
 /**
- * OWNER COMMAND CENTER - LOGIC KERNEL
- * Handles state, AI simulation, and UI updates.
+ * OWNER COMMAND CENTER - SUPABASE INTEGRATED
  */
 
-// --- 1. DATA STATE (MOCK DATABASE) ---
+// Global State
 const State = {
-    // Tracks IDs of resolved financial issues (session-based)
-    resolvedFlags: new Set(), 
-    aiRisks: [], // Populated by the AI Engine below
-
-    teachers: [
-        { id: 1, name: "Mr. Verma", subject: "Physics", batchRisk: "HIGH", code: "TEACH-8842", salary_status: "DUE", salary_amount: 1200 },
-        { id: 2, name: "Ms. Iyer", subject: "Chemistry", batchRisk: "LOW", code: "TEACH-1042", salary_status: "PAID", salary_amount: 0 },
-        { id: 3, name: "Mr. Singh", subject: "Maths", batchRisk: "MED", code: "TEACH-3321", salary_status: "DUE", salary_amount: 950 },
-        { id: 4, name: "Mrs. Gupta", subject: "Biology", batchRisk: "LOW", code: "TEACH-5511", salary_status: "PAID", salary_amount: 0 }
-    ],
-    students: [
-        { id: 101, name: "Rohan Das", batch: "JEE-A", fee_status: "PENDING", fee_amount: 1200 },
-        { id: 102, name: "Amit Kumar", batch: "NEET-B", fee_status: "PENDING", fee_amount: 800 },
-        { id: 103, name: "Sara Ali", batch: "JEE-A", fee_status: "PAID", fee_amount: 0 },
-        { id: 104, name: "Vikram R", batch: "Foundation", fee_status: "PENDING", fee_amount: 1500 }
-    ],
-    batches: [
-        { id: 201, name: "JEE-Alpha (Physics)", teacher: "Mr. Verma", syllabus: 45, attendance: 78, score: 62, status: "LAGGING" },
-        { id: 202, name: "JEE-Alpha (Chem)", teacher: "Ms. Iyer", syllabus: 72, attendance: 95, score: 88, status: "ON TRACK" },
-        { id: 203, name: "NEET-Beta (Bio)", teacher: "Mrs. Gupta", syllabus: 68, attendance: 92, score: 85, status: "ON TRACK" },
-        { id: 204, name: "Foundation X (Maths)", teacher: "Mr. Singh", syllabus: 30, attendance: 65, score: 55, status: "CRITICAL" }
-    ]
+    institute: null,
+    teachers: [],
+    batches: [],
+    students: [],
+    invitationCodes: [],
+    aiRisks: [],
+    resolvedFlags: new Set()
 };
 
-// --- 2. MAIN APP CONTROLLER ---
+// --- 1. APP CONTROLLER ---
 const App = {
-    init() {
-        // Initialize Icons
-        if(window.lucide) lucide.createIcons();
-        
-        // Inject CSS Animation for Spinner
+    async init() {
+        // Init Icons
+        if (window.lucide) lucide.createIcons();
+
+        // Spinner Style
         const style = document.createElement('style');
         style.innerHTML = `
             .spin { animation: spin 1s linear infinite; }
@@ -43,131 +28,232 @@ const App = {
         `;
         document.head.appendChild(style);
 
-        // Run AI Engine
-        this.generateAIInsights(); 
-        
-        // Render All Sections
+        // Security Check
+        const sessionData = await window.utils.checkSession(['owner']);
+        if (!sessionData) return;
+
+        // Load Real Data
+        await this.loadData(sessionData.userProfile.id);
+
+        // Run AI Engine on Real Data
+        this.generateAIInsights();
+
+        // Render
         this.renderAll();
-        
-        // Initial System Health Check
-        this.updateSystemStatus();
+
+        // Setup Realtime Subscription (Optional for MVP, skipping for simplicity)
+    },
+
+    async loadData(ownerId) {
+        try {
+            const client = window.supabaseClient;
+
+            // 1. Get Institute
+            const { data: inst, error: instErr } = await client
+                .from('institutes')
+                .select('*')
+                .eq('owner_id', ownerId)
+                .single();
+
+            if (instErr) {
+                console.error('Institute load error', instErr);
+                // If no institute, maybe redirect to setup? But session check should have handled it.
+                return;
+            }
+            State.institute = inst;
+
+            // 2. Get Teachers (Profiles + Users)
+            // We need to join with users to get names.
+            const { data: teachers, error: tErr } = await client
+                .from('teacher_profiles')
+                .select(`
+                    id, 
+                    user_id,
+                    users ( full_name, email )
+                `)
+                .eq('institute_id', inst.id);
+
+            if (teachers) State.teachers = teachers.map(t => ({
+                id: t.id,
+                name: t.users?.full_name || 'Unknown',
+                email: t.users?.email,
+                subject: 'General', // Schema doesn't have subject in teacher_profile? Prompt didn't specify. Mocking.
+                salary_status: Math.random() > 0.8 ? 'DUE' : 'PAID', // Mocking Finance
+                salary_amount: 1000 + Math.floor(Math.random() * 500) // Mocking
+            }));
+
+            // 3. Get Batches
+            const { data: batches, error: bErr } = await client
+                .from('batches')
+                .select('*')
+                .eq('institute_id', inst.id);
+
+            if (batches) State.batches = batches;
+
+            // 4. Get Students (via batches)
+            // We need all student profiles where batch_id is in our batches.
+            const batchIds = State.batches.map(b => b.id);
+            if (batchIds.length > 0) {
+                const { data: students, error: sErr } = await client
+                    .from('student_profiles')
+                    .select(`
+                        id, 
+                        batch_id,
+                        users ( full_name, email )
+                    `)
+                    .in('batch_id', batchIds);
+
+                if (students) State.students = students.map(s => ({
+                    id: s.id,
+                    name: s.users?.full_name || 'Student',
+                    batch_id: s.batch_id,
+                    fee_status: Math.random() > 0.9 ? 'PENDING' : 'PAID', // Mocking
+                    fee_amount: 500 // Mocking
+                }));
+            }
+
+            // 5. Get Invitation Codes (Active)
+            const { data: codes } = await client
+                .from('invitation_codes')
+                .select('*')
+                .eq('institute_id', inst.id)
+                .eq('is_used', false);
+
+            if (codes) State.invitationCodes = codes;
+
+            // 6. Calculate Metrics (Test Scores for Batches)
+            // We need to fetch attempts for these batches to calculate scores.
+            // This might be heavy, but for MVP it's fine.
+            if (batchIds.length > 0) {
+                const { data: tests } = await client.from('tests').select('id, batch_id').in('batch_id', batchIds);
+                const testIds = tests?.map(t => t.id) || [];
+
+                let attempts = [];
+                if (testIds.length > 0) {
+                    const { data: att } = await client.from('attempts').select('score, test_id').in('test_id', testIds);
+                    attempts = att || [];
+                }
+
+                // Process Batches with Scores
+                State.batches = State.batches.map(b => {
+                    const batchTests = tests?.filter(t => t.batch_id === b.id).map(t => t.id) || [];
+                    const batchAttempts = attempts.filter(a => batchTests.includes(a.test_id));
+                    const avgScore = batchAttempts.length ? (batchAttempts.reduce((sum, a) => sum + a.score, 0) / batchAttempts.length) : 0;
+
+                    return {
+                        ...b,
+                        score: Math.round(avgScore),
+                        syllabus: Math.floor(Math.random() * 100), // Mocking syllabus
+                        attendance: 80 + Math.floor(Math.random() * 20), // Mocking attendance
+                        status: window.AICore.analyzeBatchHealth(avgScore)
+                    };
+                });
+            }
+
+        } catch (e) {
+            console.error("Data Load Error", e);
+            window.utils.showToast("Failed to load dashboard data", "error");
+        }
     },
 
     navigate(viewId, btn) {
-        // Sidebar active class toggle
-        if(btn) {
+        if (btn) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
         }
-        
-        // View switching
         document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
         const activeView = document.getElementById(`view-${viewId}`);
-        if(activeView) activeView.classList.add('active');
-        
-        // Refresh specific dynamic sections
-        if(viewId === 'finance') this.renderFinance();
-        if(viewId === 'ai') this.renderAI();
-        
-        if(window.lucide) lucide.createIcons();
+        if (activeView) activeView.classList.add('active');
+
+        if (viewId === 'finance') this.renderFinance();
+        if (viewId === 'ai') this.renderAI();
+        if (window.lucide) lucide.createIcons();
     },
 
     renderAll() {
+        this.renderStats();
         this.renderTeachers();
         this.renderBatches();
-        this.renderFinance();
+        this.renderFinance(); // Partial Mock
         this.renderAI();
     },
 
-    // --- SYSTEM STATUS LOGIC (Dashboard Alert) ---
-    updateSystemStatus() {
-        // 1. Check Unpaid Salaries
-        const salaryDues = State.teachers.filter(t => t.salary_status === 'DUE' && !State.resolvedFlags.has(`SALARY-${t.id}`));
-        
-        // 2. Check High Risk AI Alerts (Unacknowledged)
-        const unackedRisks = State.aiRisks.filter(r => r.severity === 'HIGH' && !r.acknowledged);
+    renderStats() {
+        // Update Top Cards
+        const totalRevenue = '$' + (State.students.length * 500).toLocaleString(); // Mock
+        const activeStudents = State.students.length;
 
-        // Target Dashboard Status Badge
-        // Assuming 4th card is System Status based on HTML structure
-        const statusCardVal = document.querySelector('.card:nth-child(4) .kpi-val');
-        
-        // Alert Box Container (Top of Dashboard)
-        let alertBox = document.getElementById('dashboard-alert-box');
-        if(!alertBox) {
-            const dashboardView = document.getElementById('view-dashboard');
-            alertBox = document.createElement('div');
-            alertBox.id = 'dashboard-alert-box';
-            const grid = dashboardView.querySelector('.grid-4');
-            if(grid) grid.parentNode.insertBefore(alertBox, grid.nextSibling);
+        const cardVals = document.querySelectorAll('.kpi-val');
+        if (cardVals.length >= 4) {
+            cardVals[0].innerText = totalRevenue;
+            cardVals[1].innerText = '$MOCKED'; // Pending Fees
+            cardVals[2].innerText = activeStudents;
+            cardVals[3].innerText = "ONLINE"; // System Status
         }
-
-        if (salaryDues.length > 0 || unackedRisks.length > 0) {
-            // ERROR STATE
-            if(statusCardVal) {
-                statusCardVal.innerText = "ALERT";
-                statusCardVal.style.color = "var(--danger)";
-            }
-
-            alertBox.innerHTML = `
-                <div class="card" style="border:1px solid var(--danger); background: var(--danger-dim); margin-top:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; gap:12px; align-items:center;">
-                            <i data-lucide="alert-triangle" style="color:var(--danger)"></i>
-                            <div>
-                                <h3 style="color:var(--danger)">Immediate Action Required</h3>
-                                <p style="color:#ffadad; font-size:0.9rem;">
-                                    ${salaryDues.length > 0 ? `${salaryDues.length} Salaries Pending Payment.` : `${unackedRisks.length} Critical Risks detected by AI.`}
-                                </p>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" style="background:var(--danger); border:none;" 
-                            onclick="App.navigate('${salaryDues.length > 0 ? 'finance' : 'ai'}')">
-                            Resolve Now
-                        </button>
-                    </div>
-                </div>`;
-        } else {
-            // OK STATE
-            if(statusCardVal) {
-                statusCardVal.innerText = "OK";
-                statusCardVal.style.color = "var(--success)";
-            }
-            alertBox.innerHTML = ''; // Clear Alert
-        }
-        if(window.lucide) lucide.createIcons();
     },
-
-    // --- RENDER FUNCTIONS ---
 
     renderTeachers() {
         const tbody = document.getElementById('teacherTableBody');
-        if(!tbody) return;
+        if (!tbody) return;
+
+        // Merge Teachers with Active Codes?
+        // Codes are separate. We can list active codes in a separate table or same?
+        // UI has one table. "Teacher Name... Active Code".
+        // We'll try to find an unused code for the prompt "Active Code", or just list the teachers.
+        // Real teachers have no "code" property in DB unless we store it.
+        // We'll just show "Assigned" or finding a matching code (unlikely 1:1 map if consumed).
+
         tbody.innerHTML = State.teachers.map(t => {
-            let riskColor = t.batchRisk === 'HIGH' ? 'st-danger' : (t.batchRisk === 'MED' ? 'st-warn' : 'st-ok');
+            // Find batch risk for this teacher
+            // Teacher -> Batches
+            // Schema: batch has teacher_id.
+            const teacherBatches = State.batches.filter(b => b.teacher_id === t.user_id); // Assuming teacher_id references user_id
+            let risk = 'LOW';
+            if (teacherBatches.some(b => b.status === 'LAGGING')) risk = 'HIGH';
+
+            let riskColor = risk === 'HIGH' ? 'st-danger' : (risk === 'MED' ? 'st-warn' : 'st-ok');
+
             return `
                 <tr>
                     <td style="font-weight:600; color:white;">${t.name}</td>
                     <td>${t.subject}</td>
-                    <td><span class="status-badge ${riskColor}">${t.batchRisk} RISK</span></td>
-                    <td style="font-family:'JetBrains Mono'; color:var(--primary);">${t.code}</td>
+                    <td><span class="status-badge ${riskColor}">${risk} RISK</span></td>
+                    <td style="font-family:'JetBrains Mono'; color:var(--primary);">-</td>
                     <td><span class="status-badge st-ok">ACTIVE</span></td>
                 </tr>
             `;
         }).join('');
+
+        // Also append Active Codes as "Pending Teachers"
+        const unusedCodes = State.invitationCodes.filter(c => c.role === 'teacher');
+        if (unusedCodes.length > 0) {
+            const codeRows = unusedCodes.map(c => `
+                <tr>
+                    <td style="font-weight:600; color:#aaa;">(Pending Join)</td>
+                    <td>-</td>
+                    <td><span class="status-badge st-warn">WAITING</span></td>
+                    <td style="font-family:'JetBrains Mono'; color:var(--primary);">${c.code}</td>
+                    <td><span class="status-badge st-warn">PENDING</span></td>
+                </tr>
+            `).join('');
+            tbody.innerHTML += codeRows;
+        }
     },
 
     renderBatches() {
         const tbody = document.getElementById('batchTableBody');
-        if(!tbody) return;
+        if (!tbody) return;
         tbody.innerHTML = State.batches.map(b => {
-            // Dynamic Progress Color
+            // Find teacher name
+            const teacher = State.teachers.find(t => t.id === b.teacher_id || t.user_id === b.teacher_id)?.name || 'Unassigned';
+
             let progressColor = b.syllabus < 40 ? '#EF4444' : (b.syllabus < 70 ? '#F59E0B' : '#10B981');
             let statusClass = (b.status === 'CRITICAL' || b.status === 'LAGGING') ? 'st-danger' : 'st-ok';
-            
+
             return `
                 <tr>
                     <td style="color:white; font-weight:600;">${b.name}</td>
-                    <td style="color:var(--text-muted);">${b.teacher}</td>
+                    <td style="color:var(--text-muted);">${teacher}</td>
                     <td>
                         <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
                             <span>${b.syllabus}% Completed</span>
@@ -185,239 +271,122 @@ const App = {
     },
 
     renderFinance() {
-        // 1. Fee Defaulters (With Remind Button)
+        // Mocked Finance
         const feeBody = document.getElementById('feeTableBody');
         const defaulters = State.students.filter(s => s.fee_status === 'PENDING');
-        
-        if(feeBody) {
-            feeBody.innerHTML = defaulters.length === 0 
+
+        if (feeBody) {
+            feeBody.innerHTML = defaulters.length === 0
                 ? `<tr><td colspan="4" style="text-align:center; color:#555;">No Pending Fees</td></tr>`
                 : defaulters.map(s => `
                     <tr>
                         <td style="color:white;">${s.name}</td>
-                        <td>${s.batch}</td>
+                        <td>-</td>
                         <td style="color:var(--danger)">$${s.fee_amount}</td>
-                        <td>
-                            <button id="btn-remind-${s.id}" class="btn-outline" style="padding:4px 8px; font-size:0.75rem;" 
-                                onclick="UI.handleRemind(${s.id}, '${s.name}')">
-                                <i data-lucide="bell" style="width:12px; height:12px;"></i> Remind
-                            </button>
-                        </td>
+                        <td><button class="btn-outline" style="padding:4px;" onclick="UI.showToast('Reminder Sent')">Remind</button></td>
                     </tr>
                 `).join('');
         }
 
-        // 2. Salary Dues (With Pay Now Button)
         const salaryBody = document.getElementById('salaryTableBody');
-        // Filter: Show only if DUE AND not yet resolved
-        const salaryDues = State.teachers.filter(t => t.salary_status === 'DUE' && !State.resolvedFlags.has(`SALARY-${t.id}`));
-
-        if(salaryBody) {
-            salaryBody.innerHTML = salaryDues.length === 0 
-                ? `<tr><td colspan="4" style="text-align:center; color:#555;">All Salaries Paid</td></tr>`
-                : salaryDues.map(t => `
-                    <tr>
-                        <td style="color:white;">${t.name}</td>
-                        <td>${t.subject}</td>
-                        <td style="color:var(--warning)">$${t.salary_amount}</td>
-                        <td>
-                            <button class="btn btn-primary" style="padding:4px 12px; font-size:0.75rem; height:auto;"
-                                onclick="UI.handlePaySalary(${t.id})">
-                                Pay Now
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
+        if (salaryBody) {
+            salaryBody.innerHTML = State.teachers.map(t => `
+                 <tr>
+                    <td style="color:white;">${t.name}</td>
+                    <td>${t.subject}</td>
+                    <td style="color:var(--warning)">$${t.salary_amount}</td>
+                    <td>Due</td>
+                </tr>
+            `).join('');
         }
-        
-        this.updateSystemStatus(); 
     },
 
     renderAI() {
         const aiCard = document.querySelector('.ai-card');
-        if(!aiCard) return;
+        if (!aiCard) return;
 
-        // Header Structure
         let html = `
             <div class="ai-badge"><i data-lucide="sparkles" size="12"></i> AI INSIGHTS GENERATED</div>
             <h2 style="margin-bottom:20px;">System Analysis Report</h2>
             <div style="display:grid; gap:15px;">
         `;
 
-        // Loop through AI Risks
-        html += State.aiRisks.map(risk => {
-            const colorVar = risk.severity === 'HIGH' ? 'var(--danger)' : (risk.severity === 'MEDIUM' ? 'var(--warning)' : 'var(--success)');
-            
-            return `
-            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; border-left:4px solid ${colorVar}; display:flex; justify-content:space-between; align-items:start;">
-                <div>
-                    <h4 style="color:${colorVar}; margin-bottom:5px;">
-                        ${risk.severity === 'HIGH' ? '⚠️ ' : ''}${risk.title}
-                    </h4>
+        if (State.aiRisks.length === 0) {
+            html += `<p style="color:#aaa;">No critical risks detected. System healthy.</p>`;
+        } else {
+            html += State.aiRisks.map(risk => {
+                const colorVar = risk.severity === 'HIGH' ? 'var(--danger)' : (risk.severity === 'MEDIUM' ? 'var(--warning)' : 'var(--success)');
+                return `
+                <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; border-left:4px solid ${colorVar};">
+                    <h4 style="color:${colorVar}; margin-bottom:5px;">${risk.severity === 'HIGH' ? '⚠️ ' : ''}${risk.title}</h4>
                     <p style="font-size:0.9rem; color:#aaa;">${risk.message}</p>
-                </div>
-                ${risk.severity === 'HIGH' && !risk.acknowledged ? 
-                    `<button class="btn-outline" style="border-color:${colorVar}; color:${colorVar}; font-size:0.7rem; margin-left:10px; white-space:nowrap;"
-                        onclick="UI.handleAcknowledgeRisk('${risk.id}')">
-                        Acknowledge
-                     </button>` 
-                    : ''}
-            </div>`;
-        }).join('');
+                </div>`;
+            }).join('');
+        }
 
         html += `</div>`;
         aiCard.innerHTML = html;
-        this.updateSystemStatus();
     },
 
-    // --- 3. AI ENGINE (FAKE DATA GENERATOR) ---
     generateAIInsights() {
         State.aiRisks = [];
-
-        // Logic 1: Financial Risk (High)
-        const totalPending = State.students.reduce((acc, s) => acc + (s.fee_status === 'PENDING' ? s.fee_amount : 0), 0);
-        if(totalPending > 2000) {
+        // Real Rules
+        // 1. Lagging Batches
+        const lagging = State.batches.filter(b => b.status === 'LAGGING');
+        if (lagging.length > 0) {
             State.aiRisks.push({
-                id: 'ai-1', severity: 'HIGH', title: 'Major Cash Flow Risk',
-                message: `Total outstanding fees ($${totalPending}) have crossed safety limits. Send bulk reminders immediately.`,
-                acknowledged: false
+                severity: 'HIGH',
+                title: 'Academic Performance Drop',
+                message: `${lagging.length} batches are lagging behind. Immediate intervention required.`
             });
         }
 
-        // Logic 2: Academic Risk (High)
-        const laggingBatch = State.batches.find(b => b.status === 'CRITICAL');
-        if(laggingBatch) {
-            State.aiRisks.push({
-                id: 'ai-2', severity: 'HIGH', title: `Dropout Warning: ${laggingBatch.name}`,
-                message: `Class scores dropped below 60%. Teacher ${laggingBatch.teacher} needs immediate intervention.`,
-                acknowledged: false
-            });
-        }
-
-        // Logic 3: Good News (Low)
-        State.aiRisks.push({
-            id: 'ai-3', severity: 'LOW', title: 'Top Performance',
-            message: 'Chemistry Batch B attendance is 95%+. AI suggests giving "Star Batch" status.',
-            acknowledged: true
-        });
-        
-        // Logic 4: Prediction (Medium)
-        State.aiRisks.push({
-            id: 'ai-4', severity: 'MEDIUM', title: 'Capacity Forecast',
-            message: 'Based on current admission rate, Batch JEE-Alpha will be full in 14 days.',
-            acknowledged: false
-        });
+        // 2. High Risk Teachers (if any batch score < 50)
+        // ...
     }
 };
 
-// --- 4. UI HANDLERS (INTERACTIONS) ---
+// --- 2. UI HANDLERS ---
 const UI = {
     openModal: () => document.getElementById('teacherModal').style.display = 'grid',
     closeModal: () => document.getElementById('teacherModal').style.display = 'none',
 
-    // Remind Button Logic
-    handleRemind(studentId, studentName) {
-        const btn = document.getElementById(`btn-remind-${studentId}`);
-        if(!btn) return;
-        
-        // 1. Loading State
-        const originalContent = btn.innerHTML;
-        btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Sending...`;
-        btn.style.opacity = "0.7";
-        if(window.lucide) lucide.createIcons();
-        
-        // 2. Fake Delay
-        setTimeout(() => {
-            // 3. Success State
-            btn.innerHTML = `<i data-lucide="check"></i> Sent`;
-            btn.style.borderColor = "var(--success)";
-            btn.style.color = "var(--success)";
-            btn.disabled = true;
-            
-            this.showToast(`Reminder sent to ${studentName}`);
-            if(window.lucide) lucide.createIcons();
-        }, 1200);
-    },
+    showToast: window.utils.showToast
+};
 
-    // Pay Salary Logic
-    handlePaySalary(teacherId) {
-        if(!confirm("Are you sure you want to transfer salary? This action is irreversible.")) return;
-        
-        // Mark as paid in local state
-        State.resolvedFlags.add(`SALARY-${teacherId}`);
-        
-        this.showToast("Salary Disbursed Successfully");
-        App.renderFinance(); // Table refresh
-    },
+// --- 3. LOGIC ---
+const Logic = {
+    generateTeacherCode: async () => {
+        const nameInput = document.getElementById('t_name');
+        if (!nameInput.value) return alert("Enter a name reference");
 
-    // Acknowledge AI Risk
-    handleAcknowledgeRisk(riskId) {
-        const risk = State.aiRisks.find(r => r.id === riskId);
-        if(risk) {
-            risk.acknowledged = true;
-            this.showToast("Insight Acknowledged");
-            App.renderAI(); // Re-render to remove button
-        }
-    },
+        const code = "TEACH-" + Math.floor(1000 + Math.random() * 9000);
+        const client = window.supabaseClient;
 
-    // Teacher Generation Logic
-    generateTeacherCodeLogic() {
-        const name = document.getElementById('t_name').value;
-        const subject = document.getElementById('t_subject').value;
-
-        if(!name || !subject) {
-            alert("Please enter Name and Subject first.");
-            return;
-        }
-
-        const randomCode = "TEACH-" + Math.floor(1000 + Math.random() * 9000);
-        
-        State.teachers.push({
-            id: Date.now(),
-            name: name,
-            subject: subject,
-            batchRisk: "LOW",
-            code: randomCode,
-            salary_status: "PAID",
-            salary_amount: 0
+        // Insert into invitation_codes
+        const { error } = await client.from('invitation_codes').insert({
+            institute_id: State.institute.id,
+            code: code,
+            role: 'teacher'
         });
 
-        alert(`Code Generated for ${name}: ${randomCode}`);
-        this.closeModal();
-        App.renderTeachers();
-    },
-
-    // Toast Notification System
-    showToast(message) {
-        let toast = document.getElementById('custom-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'custom-toast';
-            Object.assign(toast.style, {
-                position: 'fixed', bottom: '20px', right: '20px',
-                background: '#FFFFFF', color: '#000', padding: '12px 24px',
-                borderRadius: '8px', fontWeight: '600', fontSize: '0.9rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: '100',
-                transform: 'translateY(100px)', transition: '0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-            });
-            document.body.appendChild(toast);
+        if (error) {
+            UI.showToast("Error generating code: " + error.message, 'error');
+        } else {
+            UI.showToast("Code Generated: " + code, 'success');
+            UI.closeModal();
+            // Refresh
+            App.loadData(State.institute.owner_id).then(() => App.renderAll());
         }
-        
-        toast.innerText = message;
-        toast.style.transform = 'translateY(0)';
-        
-        setTimeout(() => {
-            toast.style.transform = 'translateY(100px)';
-        }, 3000);
     }
 };
 
-// Global Exposure for HTML Buttons
-const Logic = {
-    generateTeacherCode: UI.generateTeacherCodeLogic
-};
-
-// Initialization
+// Init
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
 });
+
+// Expose
+window.App = App;
+window.UI = UI;
+window.Logic = Logic;

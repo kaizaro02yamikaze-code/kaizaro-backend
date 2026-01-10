@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,7 +19,12 @@
             --input-bg: #020617;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
 
         body {
             background-color: var(--bg-body);
@@ -58,7 +64,9 @@
             margin-top: 0.5rem;
         }
 
-        .form-group { margin-bottom: 1.25rem; }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
 
         label {
             display: block;
@@ -82,7 +90,9 @@
             outline: none;
         }
 
-        input:focus { border-color: var(--primary); }
+        input:focus {
+            border-color: var(--primary);
+        }
 
         .btn-submit {
             width: 100%;
@@ -99,8 +109,14 @@
             transition: background-color 0.2s;
         }
 
-        .btn-submit:hover { background-color: var(--primary-hover); }
-        .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
 
         .secure-badge {
             margin-top: 1.5rem;
@@ -114,13 +130,16 @@
         }
 
         .secure-icon {
-            width: 8px; height: 8px;
-            background-color: #10b981; /* Green for active */
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            /* Green for active */
             border-radius: 50%;
             box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
         }
     </style>
 </head>
+
 <body>
 
     <div class="login-container">
@@ -128,28 +147,28 @@
             <h1>Teacher Portal</h1>
             <p>Faculty Authentication</p>
         </div>
-        
+
         <form>
             <div class="form-group">
                 <label for="institute">Institute Name</label>
                 <input type="text" id="institute" placeholder="e.g. Apex Academy" required>
             </div>
-            
+
             <div class="form-group">
                 <label for="teacher-code">Faculty Code</label>
                 <input type="text" id="teacher-code" placeholder="EX: TCH-001" required>
             </div>
-            
+
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" required>
             </div>
-            
+
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" required>
             </div>
-            
+
             <button type="submit" class="btn-submit">Access Dashboard</button>
         </form>
 
@@ -159,6 +178,10 @@
         </div>
     </div>
 
-    <script src="setup-teacher.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="setup-teacher.js"></script>
 </body>
+
 </html>

@@ -1,72 +1,90 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.querySelector('form');
 
-    // Only attach the event listener if the form exists on the page
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleTeacherLogin);
-    }
-});
+document.addEventListener('DOMContentLoaded', async () => {
 
-function handleTeacherLogin(event) {
-    event.preventDefault(); // Prevent default form submission
+    // Auth Check
+    const client = window.supabaseClient;
+    const { data: { session } } = await client.auth.getSession();
 
-    const submitBtn = document.querySelector('.btn-submit');
-    
-    // Safety check in case the button class is different
-    if (submitBtn) {
-        const originalBtnText = submitBtn.innerText;
-        
-        // 1. UI Feedback: Show loading state
-        submitBtn.innerText = "Verifying Credentials...";
-        submitBtn.style.opacity = "0.7";
-        submitBtn.disabled = true;
-    }
-
-    // 2. Get Values from the Input Fields
-    const institute = document.getElementById('institute').value.trim();
-    const teacherCode = document.getElementById('teacher-code').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    // 3. Validation: Ensure all fields are filled
-    if (!institute || !teacherCode || !username || !password) {
-        alert("ACCESS DENIED: Please fill in all required fields.");
-        resetButton(submitBtn);
+    if (!session) {
+        window.location.href = 'index.html';
         return;
     }
 
-    // 4. Simulate Server Authentication (Delay)
-    setTimeout(() => {
-        // --- AUTHENTICATION LOGIC START ---
-        // In a real application, you would send a request to your backend API here.
-        // For this demo, we assume any non-empty input is valid.
-        
-        console.log("Teacher Authentication Successful");
-
-        // 5. Session Management
-        // Store teacher details in sessionStorage so the dashboard can display them
-        sessionStorage.setItem('kaizaro_teacher_session', JSON.stringify({
-            institute: institute,
-            teacherCode: teacherCode,
-            name: username,
-            role: 'TEACHER',
-            isLoggedIn: true,
-            loginTime: new Date().toISOString()
-        }));
-
-        // 6. REDIRECT to Teacher Dashboard
-        window.location.href = 'dashboard-teacher.html';
-        
-        // --- AUTHENTICATION LOGIC END ---
-
-    }, 1500); // 1.5-second simulated delay
-}
-
-// Helper function to reset the button state if validation fails
-function resetButton(btn) {
-    if (btn) {
-        btn.innerText = "Access Dashboard"; // Or whatever the original text was
-        btn.style.opacity = "1";
-        btn.disabled = false;
+    // Auto-fill or Hide Username/Password fields if they exist (since we are already logged in)
+    const userField = document.getElementById('username');
+    const passField = document.getElementById('password');
+    if (userField) {
+        userField.value = session.user.email;
+        userField.disabled = true;
+        userField.parentElement.style.display = 'none'; // Hide if possible
     }
-}
+    if (passField) {
+        passField.value = '********';
+        passField.disabled = true;
+        passField.parentElement.style.display = 'none';
+    }
+
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.querySelector('.btn-submit');
+            const originalText = btn.innerText;
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            try {
+                const code = document.getElementById('teacher-code').value;
+                const instituteName = document.getElementById('institute').value;
+                // We might not check institute name strictly if code is unique, but let's see.
+
+                // 1. Verify Code
+                const { data: invite, error: invErr } = await client
+                    .from('invitation_codes')
+                    .select('*')
+                    .eq('code', code)
+                    .eq('role', 'teacher')
+                    .eq('is_used', false)
+                    .single();
+
+                if (invErr || !invite) {
+                    throw new Error("Invalid or expired Teacher Code.");
+                }
+
+                // 2. Create User Profile
+                // We typically upsert users table
+                const { error: uErr } = await client.from('users').upsert({
+                    id: session.user.id,
+                    email: session.user.email,
+                    // Get name from where? Setup didn't ask for name. 
+                    // We'll use email part or Update later.
+                    full_name: session.user.email.split('@')[0],
+                    role: 'teacher'
+                });
+                if (uErr) throw uErr;
+
+                // 3. Create Teacher Profile
+                const { error: tErr } = await client.from('teacher_profiles').insert({
+                    user_id: session.user.id,
+                    institute_id: invite.institute_id
+                });
+                if (tErr) throw tErr;
+
+                // 4. Mark Code Used? (Optional, if single use)
+                // If codes are unique per invite, yes. If generic, no. 
+                // DB Schema calculates uniqueness. Let's assume single use for security.
+                // await client.from('invitation_codes').update({ is_used: true }).eq('id', invite.id);
+
+                window.utils.showToast("Welcome, Professor!", "success");
+                setTimeout(() => window.location.href = 'dashboard-teacher.html', 1500);
+
+            } catch (err) {
+                console.error(err);
+                window.utils.showToast(err.message, "error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+    }
+});

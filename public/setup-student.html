@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration | Kaizaro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
         /* --- EXACT DARK THEME CSS --- */
         :root {
@@ -20,7 +21,12 @@
             --input-bg: #020617;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
 
         body {
             background-color: var(--bg-body);
@@ -34,7 +40,8 @@
 
         .container {
             width: 100%;
-            max-width: 500px; /* Narrower for Student Setup */
+            max-width: 500px;
+            /* Narrower for Student Setup */
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             padding: 2.5rem;
@@ -42,12 +49,26 @@
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
-        .header { margin-bottom: 2rem; text-align: center; }
-        .header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .header p { font-size: 0.875rem; color: var(--text-muted); }
+        .header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
 
-        .form-group { margin-bottom: 1.25rem; }
-        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
         label {
             display: block;
             font-size: 0.75rem;
@@ -58,7 +79,8 @@
             letter-spacing: 0.05em;
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 0.75rem;
             background-color: var(--input-bg);
@@ -70,7 +92,9 @@
             outline: none;
         }
 
-        input:focus { border-color: var(--primary); }
+        input:focus {
+            border-color: var(--primary);
+        }
 
         .btn {
             width: 100%;
@@ -86,8 +110,14 @@
             margin-top: 1rem;
         }
 
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
 
         .info-box {
             background: rgba(37, 99, 235, 0.1);
@@ -97,10 +127,13 @@
             font-size: 0.8rem;
             color: #93c5fd;
             margin-bottom: 1.5rem;
-            display: flex; gap: 10px; align-items: flex-start;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -116,7 +149,7 @@
         </div>
 
         <form id="studentSetupForm">
-            
+
             <div class="form-group">
                 <label for="full_name">Full Name</label>
                 <input type="text" id="full_name" placeholder="e.g. Rohan Das" required>
@@ -148,37 +181,10 @@
         </form>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-
-            // Setup Logic
-            /* // Uncomment if you want to prevent re-entry
-            if (localStorage.getItem('kaizaro_student_setup_complete')) {
-                window.location.href = 'dashboard-student.html';
-                return;
-            } 
-            */
-
-            const form = document.getElementById('studentSetupForm');
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                // Save Student Data
-                const studentData = {
-                    name: document.getElementById('full_name').value,
-                    roll: document.getElementById('roll_no').value,
-                    batch: document.getElementById('batch_code').value,
-                    grade: document.getElementById('grade_level').value
-                };
-
-                localStorage.setItem('kaizaro_student_profile', JSON.stringify(studentData));
-                localStorage.setItem('kaizaro_student_setup_complete', 'true');
-
-                // Redirect to Student Dashboard
-                window.location.href = 'dashboard-student.html';
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="setup-student.js"></script>
 </body>
+
 </html>
