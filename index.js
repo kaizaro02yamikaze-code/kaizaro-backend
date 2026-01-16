@@ -1,4 +1,8 @@
 import express from 'express';
+import authRoutes from './src/routes/auth.routes.js';
+import ownerRoutes from './src/routes/owner.routes.js';
+import teacherRoutes from './src/routes/teacher.routes.js';
+import studentRoutes from './src/routes/student.routes.js';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -61,42 +65,12 @@ if (!srcDir) {
 
 console.log(`📂 Using src directory: ${srcDir}\n`);
 
-// Dynamic import with error handling
-async function loadModule(moduleName) {
-  const modulePath = path.join(srcDir, moduleName);
-  try {
-    // Convert to file:// URL for Windows compatibility
-    const fileUrl = new URL(`file://${modulePath.replace(/\\/g, '/')}`).href;
-    const module = await import(fileUrl);
-    return module.default || module;
-  } catch (err) {
-    console.error(`❌ Failed to load ${moduleName}:`);
-    console.error(`   Path: ${modulePath}`);
-    console.error(`   Error: ${err.message}`);
-    throw err;
-  }
-}
-
-// Load all routes
+// Using static imports for Render compatibility
 console.log('📦 Loading modules:\n');
-let authRoutes, ownerRoutes, teacherRoutes, studentRoutes;
-
-try {
-  authRoutes = await loadModule('routes/auth.routes.js');
-  console.log('   ✓ auth.routes.js');
-  
-  ownerRoutes = await loadModule('routes/owner.routes.js');
-  console.log('   ✓ owner.routes.js');
-  
-  teacherRoutes = await loadModule('routes/teacher.routes.js');
-  console.log('   ✓ teacher.routes.js');
-  
-  studentRoutes = await loadModule('routes/student.routes.js');
-  console.log('   ✓ student.routes.js');
-} catch (err) {
-  console.error('\n❌ FATAL: Module loading failed');
-  process.exit(1);
-}
+console.log('   ✓ auth.routes.js');
+console.log('   ✓ owner.routes.js');
+console.log('   ✓ teacher.routes.js');
+console.log('   ✓ student.routes.js');
 
 console.log('\n✅ All modules loaded successfully!\n');
 
