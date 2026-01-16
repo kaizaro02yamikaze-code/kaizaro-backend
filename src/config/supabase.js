@@ -3,12 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Ensure these variables exist in your .env file
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+// Supabase Configuration
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'placeholder-key';
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ CRITICAL ERROR: Supabase URL or Key is missing in .env file!');
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+    console.warn('⚠️  WARNING: Supabase credentials not found in .env - using placeholder values');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default supabase;

@@ -1,8 +1,8 @@
-import { supabase } from '../config/supabase.js';
+import supabase from '../config/supabase.js';
 
 /**
  * Middleware to check if user has the required role
- * @param {string} requiredRole - e.g., 'TEACHER', 'ADMIN'
+ * @param {string|string[]} requiredRole - e.g., 'TEACHER', 'ADMIN' or ['TEACHER', 'ADMIN']
  */
 export const checkRole = (requiredRole) => {
     return async (req, res, next) => {
@@ -33,10 +33,11 @@ export const checkRole = (requiredRole) => {
             }
 
             // 4. Role Match karo (Admin ke paas sab access hota hai)
-            if (profile.role !== requiredRole && profile.role !== 'ADMIN') {
+            const requiredRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+            if (!requiredRoles.includes(profile.role) && profile.role !== 'ADMIN') {
                 return res.status(403).json({ 
                     success: false, 
-                    error: `Access Denied. Required role: ${requiredRole}` 
+                    error: `Access Denied. Required role: ${requiredRoles.join(' or ')}` 
                 });
             }
 
@@ -50,3 +51,5 @@ export const checkRole = (requiredRole) => {
         }
     };
 };
+
+export default checkRole;

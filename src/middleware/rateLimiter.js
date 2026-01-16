@@ -10,3 +10,5 @@ export const aiRateLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+
+export default aiRateLimiter;
