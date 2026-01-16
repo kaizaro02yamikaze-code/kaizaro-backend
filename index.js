@@ -2,16 +2,45 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-// Import Routes
-import authRoutes from './src/routes/auth.routes.js';
-import ownerRoutes from './src/routes/owner.routes.js';
-import teacherRoutes from './src/routes/teacher.routes.js';
-import studentRoutes from './src/routes/student.routes.js';
+import fs from 'fs';
 
 // Setup for __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// === FIX FOR RENDER DEPLOYMENT ===
+// Detect if running in Render's problematic folder structure
+let srcDir = path.join(__dirname, 'src');
+const duplicateSrcPath = path.join(__dirname, 'src', 'src');
+
+if (fs.existsSync(duplicateSrcPath)) {
+  console.warn('⚠️  Detected duplicate src/src folder structure');
+  srcDir = duplicateSrcPath;
+}
+
+console.log(`📂 Loading modules from: ${srcDir}`);
+
+// Import Routes with path fallback
+async function loadRoutes() {
+  try {
+    const auth = await import(path.join(srcDir, 'routes/auth.routes.js'));
+    const owner = await import(path.join(srcDir, 'routes/owner.routes.js'));
+    const teacher = await import(path.join(srcDir, 'routes/teacher.routes.js'));
+    const student = await import(path.join(srcDir, 'routes/student.routes.js'));
+    
+    return {
+      authRoutes: auth.default,
+      ownerRoutes: owner.default,
+      teacherRoutes: teacher.default,
+      studentRoutes: student.default
+    };
+  } catch (err) {
+    console.error('❌ Failed to load routes:', err.message);
+    throw err;
+  }
+}
+
+const { authRoutes, ownerRoutes, teacherRoutes, studentRoutes } = await loadRoutes();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
