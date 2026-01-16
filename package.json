@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "debug": "node debug-paths.js"
+    "debug": "node debug-paths.js",
+    "render-setup": "node render-setup.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

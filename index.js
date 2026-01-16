@@ -8,39 +8,66 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// === FIX FOR RENDER DEPLOYMENT ===
-// Detect if running in Render's problematic folder structure
-let srcDir = path.join(__dirname, 'src');
-const duplicateSrcPath = path.join(__dirname, 'src', 'src');
+// === ROBUST RENDER DEPLOYMENT FIX ===
+console.log('🔍 Detecting deployment environment...');
+console.log(`   Current __dirname: ${__dirname}`);
 
-if (fs.existsSync(duplicateSrcPath)) {
-  console.warn('⚠️  Detected duplicate src/src folder structure');
-  srcDir = duplicateSrcPath;
-}
+let srcDir = null;
+const possiblePaths = [
+  // Try exact structure first
+  path.join(__dirname, 'src'),
+  // Try parent directory (Render might be in /src/)
+  path.join(__dirname, '..', 'src'),
+  // Try duplicate src/src
+  path.join(__dirname, 'src', 'src'),
+  // Try if we're already in src folder
+  path.join(__dirname, '..', '..', 'src'),
+];
 
-console.log(`📂 Loading modules from: ${srcDir}`);
-
-// Import Routes with path fallback
-async function loadRoutes() {
-  try {
-    const auth = await import(path.join(srcDir, 'routes/auth.routes.js'));
-    const owner = await import(path.join(srcDir, 'routes/owner.routes.js'));
-    const teacher = await import(path.join(srcDir, 'routes/teacher.routes.js'));
-    const student = await import(path.join(srcDir, 'routes/student.routes.js'));
-    
-    return {
-      authRoutes: auth.default,
-      ownerRoutes: owner.default,
-      teacherRoutes: teacher.default,
-      studentRoutes: student.default
-    };
-  } catch (err) {
-    console.error('❌ Failed to load routes:', err.message);
-    throw err;
+// Find the correct src directory
+for (const potentialPath of possiblePaths) {
+  const authRoutePath = path.join(potentialPath, 'routes', 'auth.routes.js');
+  if (fs.existsSync(authRoutePath)) {
+    srcDir = potentialPath;
+    console.log(`✅ Found src directory: ${srcDir}`);
+    break;
   }
 }
 
-const { authRoutes, ownerRoutes, teacherRoutes, studentRoutes } = await loadRoutes();
+if (!srcDir) {
+  console.error('❌ CRITICAL: Could not find src directory!');
+  console.error('   Searched paths:');
+  possiblePaths.forEach(p => console.error(`   - ${p}`));
+  process.exit(1);
+}
+
+// Import Routes with comprehensive error handling
+async function loadRoutes() {
+  const routes = {};
+  const routeFiles = [
+    'routes/auth.routes.js',
+    'routes/owner.routes.js',
+    'routes/teacher.routes.js',
+    'routes/student.routes.js'
+  ];
+
+  for (const file of routeFiles) {
+    const fullPath = path.join(srcDir, file);
+    try {
+      const module = await import(fullPath);
+      const key = file.split('/')[1].replace('.routes.js', 'Routes');
+      routes[key] = module.default || module;
+      console.log(`  ✓ Loaded ${file}`);
+    } catch (err) {
+      console.error(`  ✗ Failed to load ${file}: ${err.message}`);
+      throw err;
+    }
+  }
+  return routes;
+}
+
+const routes = await loadRoutes();
+const { authRoutes, ownerRoutes, teacherRoutes, studentRoutes } = routes;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
