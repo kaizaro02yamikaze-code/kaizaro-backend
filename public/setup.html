@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Profile | Kaizaro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script defer>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
+        // --- UPDATED NAVIGATION LOGIC ---
+        function navigateTo(role) {
+            console.log("Selected Role:", role);
+            
+            // Save the role to localStorage
+            localStorage.setItem('kaizaro_selected_role', role);
+            
+            // Redirect based on role selection to SETUP pages
+            if (role === 'OWNER') {
+                window.location.href = 'setup-owner.html';
+            } else if (role === 'TEACHER') {
+                window.location.href = 'setup-teacher.html';
+            } else if (role === 'STUDENT') {
+                window.location.href = 'setup-student.html';
+            }
+        }
+    </script>
+
+    <style>
+        /* --- PROFESSIONAL SAAS THEME --- */
+        :root {
+            --bg-body: #050505; --bg-card: #121212; 
+            --primary: #2563eb; --primary-hover: #1d4ed8;
+            --text-main: #ffffff; --text-muted: #a1a1aa;
+            --border: #27272a; --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body {
+            background-color: var(--bg-body); color: var(--text-main);
+            height: 100vh; display: flex; justify-content: center; align-items: center;
+        }
+
+        /* Layout Container */
+        .container {
+            width: 100%; max-width: 950px; height: 600px;
+            display: grid; grid-template-columns: 320px 1fr; /* Sidebar Fixed, Content Flexible */
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 24px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            background: #0a0a0a; border-right: 1px solid var(--border);
+            padding: 40px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; color: white; }
+        .sidebar h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 10px; color: white; }
+        .sidebar p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
+        /* Right Content Styling */
+        .content { 
+            padding: 60px; position: relative; 
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        h2 { font-size: 1.8rem; margin-bottom: 8px; }
+        .sub-text { color: var(--text-muted); margin-bottom: 30px; font-size: 0.95rem; }
+
+        /* Role Selection Grid */
+        .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        
+        .role-card {
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px; cursor: pointer; text-align: center; background: #18181b;
+            transition: all 0.2s;
+        }
+        .role-card:hover { border-color: var(--primary); background: rgba(37,99,235,0.05); transform: translateY(-3px); }
+        .role-icon { color: var(--text-muted); margin-bottom: 10px; }
+        .role-card:hover .role-icon { color: var(--primary); }
+        .role-title { font-size: 0.9rem; font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo"><i data-lucide="layers"></i> KAIZARO</div>
+            <div>
+                <h1>Setup your<br>Workspace.</h1>
+                <p>Tell us about your role to configure your personalized dashboard.</p>
+            </div>
+            <div style="font-size:0.75rem; color:#333;">Secure Environment v2.4</div>
+        </div>
+
+        <div class="content">
+            
+            <div id="step-roles" class="view-section active">
+                <span style="color:var(--primary); font-size:0.75rem; font-weight:700; letter-spacing:1px;">QUICK START</span>
+                <h2>Who are you?</h2>
+                <p class="sub-text">Select your primary role to enter the system.</p>
+
+                <div class="role-grid">
+                    <div class="role-card" onclick="navigateTo('OWNER')">
+                        <div class="role-icon"><i data-lucide="building-2" size="32"></i></div>
+                        <div class="role-title">Owner</div>
+                    </div>
+                    <div class="role-card" onclick="navigateTo('TEACHER')">
+                        <div class="role-icon"><i data-lucide="graduation-cap" size="32"></i></div>
+                        <div class="role-title">Teacher</div>
+                    </div>
+                    <div class="role-card" onclick="navigateTo('STUDENT')">
+                        <div class="role-icon"><i data-lucide="user" size="32"></i></div>
+                        <div class="role-title">Student</div>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+    </div>
+
+</body>
+</html>

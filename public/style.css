@@ -1,0 +1,235 @@
+/* =====================================================
+   DESIGN TOKENS (B2B SaaS Palette)
+===================================================== */
+:root {
+  /* Dark Theme (Default) */
+  --bg-main: #0b1220;
+  --bg-panel: #111a2e;
+  --bg-card: #151f36;
+  --bg-hover: #1c2742;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --primary: #38bdf8;
+  --primary-glow: rgba(56, 189, 248, 0.3);
+  --danger: #f87171;
+  --success: #4ade80;
+  --border: rgba(255, 255, 255, 0.08);
+  --radius: 12px;
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] {
+  --bg-main: #f8fafc;
+  --bg-panel: #ffffff;
+  --bg-card: #f1f5f9;
+  --bg-hover: #e2e8f0;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --primary: #0284c7;
+  --border: rgba(0, 0, 0, 0.08);
+}
+
+/* =====================================================
+   CORE RESET
+===================================================== */
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  height: 100vh;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+/* =====================================================
+   LAYOUT ENGINE
+===================================================== */
+#app {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px; /* Standard SaaS Layout */
+  height: 100vh;
+}
+
+/* =====================================================
+   SIDEBARS (NAV & ANALYTICS)
+===================================================== */
+.sidebar {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.right {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+/* BRAND LOGO */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: var(--primary);
+  letter-spacing: -0.5px;
+}
+
+/* NAVIGATION */
+.nav-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.nav-item.active {
+  background: var(--primary);
+  color: #0b1220;
+  font-weight: 600;
+}
+
+/* =====================================================
+   MAIN INTERFACE (CHAT & TRAINING)
+===================================================== */
+.main {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-main);
+}
+
+.top-bar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.context-badge {
+  background: var(--bg-hover);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+/* CHAT AREA */
+.chat-area {
+  flex: 1;
+  padding: 32px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-message, .user-message {
+  max-width: 80%;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  animation: slideUp 0.3s ease-out;
+}
+
+.ai-message {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 2px;
+}
+
+.user-message {
+  background: var(--primary);
+  color: #0b1220;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+  font-weight: 500;
+}
+
+/* INPUT COMPONENT */
+.input-bar {
+  padding: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.input-container {
+  display: flex;
+  gap: 12px;
+  background: var(--bg-panel);
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.input-container input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px;
+  color: var(--text-main);
+  outline: none;
+}
+
+/* =====================================================
+   MODALS (AUTHENTICATION)
+===================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  padding: 40px;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* =====================================================
+   ANIMATIONS & UTILITIES
+===================================================== */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hidden { display: none !important; }
+
+/* Custom Scrollbar for Enterprise Look */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }

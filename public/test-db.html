@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; white-space: pre-wrap; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Database Test - Check Messages</h1>
+
+    <div class="test-section">
+        <h3>Check Tables Status</h3>
+        <button class="btn" onclick="checkTables()">Check Tables</button>
+        <div id="tablesResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Check Messages in Database</h3>
+        <button class="btn" onclick="checkMessages()">Check Messages</button>
+        <div id="messagesResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Check Chats in Database</h3>
+        <button class="btn" onclick="checkChats()">Check Chats</button>
+        <div id="chatsResult" class="result"></div>
+    </div>
+
+    <script>
+        async function checkTables() {
+            const result = document.getElementById('tablesResult');
+            result.innerHTML = '⏳ Checking...';
+
+            try {
+                const response = await fetch('/api/supabase/init-db', { method: 'POST' });
+                const data = await response.json();
+
+                let html = 'Database Tables Status:\n\n';
+                for (const [table, status] of Object.entries(data.tables)) {
+                    html += `${table}: ${status === 'EXISTS' ? '✅ EXISTS' : '❌ MISSING - ' + status}\n`;
+                }
+                result.className = 'result success';
+                result.innerHTML = html;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function checkMessages() {
+            const result = document.getElementById('messagesResult');
+            result.innerHTML = '⏳ Checking messages...';
+
+            try {
+                const response = await fetch('/api/supabase/messages/test-user-id');
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    let html = `Found ${data.data.length} messages:\n\n`;
+                    data.data.forEach((msg, i) => {
+                        html += `${i+1}. [${msg.role}] ${msg.content.substring(0, 50)}...\n`;
+                        html += `   Chat ID: ${msg.chat_id}, Time: ${new Date(msg.created_at).toLocaleString()}\n\n`;
+                    });
+                    result.className = 'result success';
+                    result.innerHTML = html;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = '❌ No messages found or error: ' + JSON.stringify(data);
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function checkChats() {
+            const result = document.getElementById('chatsResult');
+            result.innerHTML = '⏳ Checking chats...';
+
+            try {
+                const response = await fetch('/api/supabase/chats/test-user-id');
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    let html = `Found ${data.data.length} chats:\n\n`;
+                    data.data.forEach((chat, i) => {
+                        html += `${i+1}. "${chat.title}" - ${new Date(chat.created_at).toLocaleString()}\n`;
+                        html += `   Content: ${chat.chat_content.substring(0, 50)}...\n\n`;
+                    });
+                    result.className = 'result success';
+                    result.innerHTML = html;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = '❌ No chats found or error: ' + JSON.stringify(data);
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
