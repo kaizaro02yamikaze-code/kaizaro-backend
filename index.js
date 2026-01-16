@@ -15,18 +15,29 @@ console.log(`📍 Working Directory: ${process.cwd()}\n`);
 
 // --- 1. SMART PATH FINDER (Fixes Render/Windows path issues) ---
 let srcDir = null;
+
+// Handle Render's /src/ directory issue
+let baseDir = __dirname;
+if (baseDir.includes('/opt/render/project/src/backend')) {
+  baseDir = '/opt/render/project';
+} else if (baseDir.includes('/opt/render/project/src')) {
+  baseDir = path.dirname(baseDir);
+}
+
 const searchPaths = [
-  path.join(__dirname, 'src'),             // Standard
-  path.join(__dirname, '..', 'src'),       // One level up
-  path.join(__dirname, 'src', 'src'),      // Render nesting bug
-  path.join(process.cwd(), 'src')          // Current working dir
+  path.join(__dirname, 'src'),                    // Standard: backend/src
+  path.join(baseDir, 'backend', 'src'),           // From root: backend/src
+  path.join(__dirname, '..', 'backend', 'src'),   // One level up
+  path.join(process.cwd(), 'backend', 'src'),     // Current working dir
+  path.join(process.cwd(), 'src')                 // Direct src in cwd
 ];
 
 console.log('🔍 Searching for src directory...');
+console.log(`📍 __dirname: ${__dirname}`);
+console.log(`📍 process.cwd(): ${process.cwd()}\n`);
 
 for (const searchPath of searchPaths) {
   const checkFile = path.join(searchPath, 'routes', 'auth.routes.js');
-  // Check if file exists to validate folder
   if (fs.existsSync(checkFile)) {
     srcDir = searchPath;
     console.log(`✅ FOUND src at: ${srcDir}\n`);
