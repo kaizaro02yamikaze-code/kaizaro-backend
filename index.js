@@ -1,11 +1,7 @@
 import express from 'express';
-import authRoutes from './src/routes/auth.routes.js';
-import ownerRoutes from './src/routes/owner.routes.js';
-import teacherRoutes from './src/routes/teacher.routes.js';
-import studentRoutes from './src/routes/student.routes.js';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import fs from 'fs';
 
 // Setup for __dirname in ES Modules
@@ -65,12 +61,49 @@ if (!srcDir) {
 
 console.log(`📂 Using src directory: ${srcDir}\n`);
 
-// Using static imports for Render compatibility
+// Normalize srcDir to avoid duplicated 'src/src' segments (Render sometimes nests)
+if (srcDir) {
+  const dup = `${path.sep}src${path.sep}src`;
+  while (srcDir.includes(dup)) {
+    srcDir = srcDir.replace(dup, `${path.sep}src`);
+  }
+  srcDir = path.normalize(srcDir);
+}
+
+// Dynamic import with error handling (robust across environments)
+async function loadModule(moduleName) {
+  const modulePath = path.join(srcDir, moduleName);
+  try {
+    const fileUrl = pathToFileURL(modulePath).href;
+    const mod = await import(fileUrl);
+    return mod.default || mod;
+  } catch (err) {
+    console.error(`❌ Failed to load ${moduleName}:`);
+    console.error(`   Path: ${modulePath}`);
+    console.error(`   Error: ${err.message}`);
+    throw err;
+  }
+}
+
+// Load all routes dynamically so imports work regardless of Render root
 console.log('📦 Loading modules:\n');
-console.log('   ✓ auth.routes.js');
-console.log('   ✓ owner.routes.js');
-console.log('   ✓ teacher.routes.js');
-console.log('   ✓ student.routes.js');
+let authRoutes, ownerRoutes, teacherRoutes, studentRoutes;
+try {
+  authRoutes = await loadModule('routes/auth.routes.js');
+  console.log('   ✓ auth.routes.js');
+
+  ownerRoutes = await loadModule('routes/owner.routes.js');
+  console.log('   ✓ owner.routes.js');
+
+  teacherRoutes = await loadModule('routes/teacher.routes.js');
+  console.log('   ✓ teacher.routes.js');
+
+  studentRoutes = await loadModule('routes/student.routes.js');
+  console.log('   ✓ student.routes.js');
+} catch (err) {
+  console.error('\n❌ FATAL: Module loading failed');
+  process.exit(1);
+}
 
 console.log('\n✅ All modules loaded successfully!\n');
 
