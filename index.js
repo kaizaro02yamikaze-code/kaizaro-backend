@@ -4,151 +4,103 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import fs from 'fs';
 
-// Setup for __dirname in ES Modules
+// --- CONFIGURATION ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log('\n🚀 KAIZARO BACKEND STARTUP');
 console.log('===========================\n');
-
-// === BULLETPROOF RENDER FIX ===
-// This will work ANYWHERE - on localhost, Render, or any deployment
 console.log(`📍 Script Location: ${__dirname}`);
 console.log(`📍 Working Directory: ${process.cwd()}\n`);
 
+// --- 1. SMART PATH FINDER (Fixes Render/Windows path issues) ---
 let srcDir = null;
 const searchPaths = [
-  // Priority 1: Direct src folder
-  path.join(__dirname, 'src'),
-  // Priority 2: Parent directory src
-  path.join(__dirname, '..', 'src'),
-  // Priority 3: Duplicate src/src (Render bug)
-  path.join(__dirname, 'src', 'src'),
-  // Priority 4: Two levels up
-  path.join(__dirname, '..', '..', 'src'),
-  // Priority 5: Current working directory
-  path.join(process.cwd(), 'src'),
-  // Priority 6: Parent of cwd
-  path.join(process.cwd(), '..', 'src'),
+  path.join(__dirname, 'src'),             // Standard
+  path.join(__dirname, '..', 'src'),       // One level up
+  path.join(__dirname, 'src', 'src'),      // Render nesting bug
+  path.join(process.cwd(), 'src')          // Current working dir
 ];
 
-console.log('🔍 Searching for src directory...\n');
+console.log('🔍 Searching for src directory...');
 
 for (const searchPath of searchPaths) {
-  const authRoutePath = path.join(searchPath, 'routes', 'auth.routes.js');
-  console.log(`   Checking: ${searchPath}`);
-  
-  if (fs.existsSync(authRoutePath)) {
+  const checkFile = path.join(searchPath, 'routes', 'auth.routes.js');
+  // Check if file exists to validate folder
+  if (fs.existsSync(checkFile)) {
     srcDir = searchPath;
-    console.log(`   ✅ FOUND!\n`);
+    console.log(`✅ FOUND src at: ${srcDir}\n`);
     break;
   }
 }
 
+// Validation
 if (!srcDir) {
-  console.error('❌ CRITICAL ERROR: Cannot find src directory!');
-  console.error('\n   Attempted paths:');
-  searchPaths.forEach(p => console.error(`   - ${p}`));
-  console.error('\n📂 Directory contents:');
-  try {
-    const contents = fs.readdirSync(__dirname);
-    contents.forEach(c => console.error(`   ${c}`));
-  } catch (e) {
-    console.error(`   Error: ${e.message}`);
-  }
+  console.error('❌ CRITICAL ERROR: Could not find "src" directory.');
+  console.error('   Please ensure your files are in the "backend/src" folder.');
   process.exit(1);
 }
 
-console.log(`📂 Using src directory: ${srcDir}\n`);
+// Normalize path to prevent double slashes
+srcDir = path.normalize(srcDir);
 
-// Normalize srcDir to avoid duplicated 'src/src' segments (Render sometimes nests)
-if (srcDir) {
-  const dup = `${path.sep}src${path.sep}src`;
-  while (srcDir.includes(dup)) {
-    srcDir = srcDir.replace(dup, `${path.sep}src`);
-  }
-  srcDir = path.normalize(srcDir);
-}
-
-// Dynamic import with error handling (robust across environments)
-async function loadModule(moduleName) {
-  const modulePath = path.join(srcDir, moduleName);
+// --- 2. DYNAMIC MODULE LOADER ---
+async function loadModule(relativePath) {
+  const fullPath = path.join(srcDir, relativePath);
   try {
-    const fileUrl = pathToFileURL(modulePath).href;
+    // Convert path to file:// URL for ES Import
+    const fileUrl = pathToFileURL(fullPath).href;
     const mod = await import(fileUrl);
     return mod.default || mod;
   } catch (err) {
-    console.error(`❌ Failed to load ${moduleName}:`);
-    console.error(`   Path: ${modulePath}`);
+    console.error(`❌ Failed to load module: ${relativePath}`);
     console.error(`   Error: ${err.message}`);
-    throw err;
+    process.exit(1);
   }
 }
 
-// Load all routes dynamically so imports work regardless of Render root
-console.log('📦 Loading modules:\n');
+// --- 3. LOAD ROUTES DYNAMICALLY ---
+// Note: Hum 'let' use kar rahe hain, upar koi static import nahi hona chahiye
 let authRoutes, ownerRoutes, teacherRoutes, studentRoutes;
+
 try {
+  console.log('📦 Loading Routes...');
   authRoutes = await loadModule('routes/auth.routes.js');
-  console.log('   ✓ auth.routes.js');
-
   ownerRoutes = await loadModule('routes/owner.routes.js');
-  console.log('   ✓ owner.routes.js');
-
   teacherRoutes = await loadModule('routes/teacher.routes.js');
-  console.log('   ✓ teacher.routes.js');
-
   studentRoutes = await loadModule('routes/student.routes.js');
-  console.log('   ✓ student.routes.js');
-} catch (err) {
-  console.error('\n❌ FATAL: Module loading failed');
-  process.exit(1);
+  console.log('✅ All routes loaded successfully.\n');
+} catch (error) {
+  console.error('🔥 Error loading routes:', error);
 }
 
-console.log('\n✅ All modules loaded successfully!\n');
-
-// Create Express app
+// --- 4. EXPRESS APP SETUP ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes
+// Serve Static Frontend Files (HTML/CSS/JS)
+// HTML files are in the public directory inside backend folder
+const publicPath = path.join(__dirname, 'public');
+console.log(`📁 Static Files Path: ${publicPath}`);
+console.log(`✅ Files served from: ${publicPath}`);
+app.use(express.static(publicPath));
+
+// --- 5. API ROUTES ---
 app.use('/api/auth', authRoutes);
 app.use('/api/owner', ownerRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/student', studentRoutes);
 
-// Serve Frontend
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Health check endpoint
+// Health Check
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
+    res.json({ status: "OK", platform: process.platform });
 });
 
-// Start Server
-const server = app.listen(PORT, () => {
-    console.log(`\n✅ SERVER READY!`);
-    console.log(`🌐 URL: http://localhost:${PORT}`);
-    console.log(`📡 API Routes: /api/auth, /api/owner, /api/teacher, /api/student`);
-    console.log(`🏥 Health Check: http://localhost:${PORT}/health\n`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully...');
-    server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-    });
+// --- 7. START SERVER ---
+app.listen(PORT, () => {
+    console.log(`\n✅ SERVER RUNNING!`);
+    console.log(`👉 http://localhost:${PORT}`);
 });
