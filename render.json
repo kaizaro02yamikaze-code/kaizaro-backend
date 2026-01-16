@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm install && node render-prebuild.js",
+  "startCommand": "node index.js",
+  "envVars": [
+    {
+      "key": "NODE_ENV",
+      "value": "production"
+    },
+    {
+      "key": "PORT",
+      "value": "3000"
+    }
+  ]
+}

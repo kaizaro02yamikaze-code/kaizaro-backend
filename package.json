@@ -9,7 +9,8 @@
     "dev": "nodemon index.js",
     "debug": "node debug-paths.js",
     "render-setup": "node render-setup.js",
-    "render": "node render-deploy-fix.js"
+    "render": "node render-deploy-fix.js",
+    "prebuild": "node render-prebuild.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
